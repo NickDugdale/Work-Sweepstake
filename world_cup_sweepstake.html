@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Cup 2026 Office Sweepstake</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            font-family: 'Manrope', sans-serif;
+            background: #0B1F33;
+            color: #E8ECED;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #0B1F33 0%, #0D2847 100%);
+            border-bottom: 1px solid rgba(79, 195, 247, 0.15);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+            color: #0B1F33;
+            border: none;
+            padding: 0.65rem 1.5rem;
+            border-radius: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(79, 195, 247, 0.25);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: rgba(79, 195, 247, 0.1);
+            color: #4FC3F7;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+        }
+
+        button.secondary:hover {
+            background: rgba(79, 195, 247, 0.15);
+        }
+
+        .screen {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen-content {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(13, 40, 71, 0.8) 0%, rgba(20, 50, 80, 0.6) 100%);
+            border: 1px solid rgba(79, 195, 247, 0.15);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            color: #4FC3F7;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .team-tile {
+            background: rgba(79, 195, 247, 0.05);
+            border: 2px solid rgba(79, 195, 247, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .team-tile:hover:not(.unavailable):not(.assigned) {
+            background: rgba(79, 195, 247, 0.15);
+            border-color: rgba(79, 195, 247, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .team-tile.selected {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.3) 0%, rgba(41, 182, 246, 0.3) 100%);
+            border-color: #4FC3F7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+        }
+
+        .team-tile.assigned {
+            background: rgba(79, 195, 247, 0.08);
+            border-color: rgba(79, 195, 247, 0.15);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .team-tile.unavailable {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .team-flag {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .team-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #E8ECED;
+        }
+
+        .team-owner {
+            font-size: 0.75rem;
+            color: #7DB8D8;
+            margin-top: 0.25rem;
+        }
+
+        .participant-input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .participant-input-group label {
+            display: block;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+            color: #7DB8D8;
+        }
+
+        input[type="text"], input[type="password"], input[type="email"] {
+            width: 100%;
+            padding: 0.85rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(79, 195, 247, 0.2);
+            border-radius: 8px;
+            color: #E8ECED;
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
+            outline: none;
+            background: rgba(0, 0, 0, 0.5);
+            border-color: #4FC3F7;
+            box-shadow: 0 0 15px rgba(79, 195, 247, 0.2);
+        }
+
+        .leaderboard {
+            margin-top: 1.5rem;
+        }
+
+        .leaderboard-row {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(79, 195, 247, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: grid;
+            grid-template-columns: 50px 1fr 120px 80px;
+            gap: 1.5rem;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .leaderboard-row:hover {
+            background: rgba(79, 195, 247, 0.08);
+            transform: translateX(4px);
+        }
+
+        .leaderboard-rank {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+        }
+
+        .leaderboard-name {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .leaderboard-movement {
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .movement-up {
+            color: #4CAF50;
+        }
+
+        .movement-down {
+            color: #FF6B6B;
+        }
+
+        .leaderboard-points {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4FC3F7;
+            text-align: right;
+        }
+
+        .match-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(79, 195, 247, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .match-stage {
+            font-size: 0.75rem;
+            background: rgba(79, 195, 247, 0.2);
+            color: #4FC3F7;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .match-score {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .team-matchup {
+            text-align: center;
+            flex: 1;
+        }
+
+        .team-matchup-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .match-result {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4FC3F7;
+        }
+
+        .match-vs {
+            color: #7DB8D8;
+            font-size: 0.85rem;
+            padding: 0 0.5rem;
+        }
+
+        .match-commentary {
+            font-size: 0.9rem;
+            color: #7DB8D8;
+            margin-top: 0.75rem;
+            font-style: italic;
+        }
+
+        .match-points {
+            background: rgba(79, 195, 247, 0.1);
+            border-left: 3px solid #4FC3F7;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .news-panel {
+            background: rgba(79, 195, 247, 0.08);
+            border: 1px solid rgba(79, 195, 247, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .news-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(79, 195, 247, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .news-headline {
+            font-weight: 600;
+            color: #4FC3F7;
+            margin-bottom: 0.5rem;
+        }
+
+        .news-summary {
+            font-size: 0.9rem;
+            color: #7DB8D8;
+            line-height: 1.5;
+        }
+
+        .news-time {
+            font-size: 0.75rem;
+            color: #556C7D;
+            margin-top: 0.5rem;
+        }
+
+        .settings-group {
+            margin-bottom: 2rem;
+        }
+
+        .settings-group h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            color: #4FC3F7;
+        }
+
+        .info-text {
+            font-size: 0.9rem;
+            color: #7DB8D8;
+            line-height: 1.6;
+        }
+
+        .setup-progress {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .progress-step {
+            flex: 1;
+            height: 4px;
+            background: rgba(79, 195, 247, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-step.active {
+            background: linear-gradient(90deg, #4FC3F7 0%, #29B6F6 100%);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #0D2847 0%, #0B1F33 100%);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #4FC3F7;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
+            color: #0B1F33;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            animation: slideIn 0.3s ease;
+            z-index: 2000;
+            max-width: 300px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 1rem;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .screen {
+                padding: 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .team-grid {
+                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            }
+
+            .leaderboard-row {
+                grid-template-columns: 40px 1fr 60px;
+                padding: 1rem;
+            }
+
+            .leaderboard-movement {
+                display: none;
+            }
+
+            .header-actions {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            button {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚽ World Cup 2026 Sweepstake</h1>
+        <div class="header-actions">
+            <button class="secondary" onclick="showSettings()">Settings</button>
+            <button id="syncBtn" onclick="showAddMatch()">+ Add Match</button>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <div class="screen active" id="welcomeScreen">
+            <div class="screen-content">
+                <div class="card">
+                    <h2>Welcome to the World Cup Sweepstake</h2>
+                    <p class="info-text" style="margin-bottom: 2rem;">Manage your office sweepstake. Add match results as the tournament progresses and watch the leaderboard update in real-time.</p>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                        <button style="flex: 1; min-width: 150px;" onclick="startWithDefaults()">✅ Quick Start (Default Names)</button>
+                        <button class="secondary" style="flex: 1; min-width: 150px;" onclick="startNewSweepstake()">✏️ Customize Names First</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="screen" id="setupScreen">
+            <div class="screen-content">
+                <div class="setup-progress">
+                    <div class="progress-step active"></div>
+                    <div class="progress-step" id="step2"></div>
+                    <div class="progress-step" id="step3"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Customize Participant Names</h2>
+                    <p class="info-text" style="margin-bottom: 1.5rem;">Edit the participant names. You can change these anytime later.</p>
+                    <div id="participantInputs"></div>
+                    <button onclick="proceedToTeamSelection()">Continue to Team Selection</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="screen" id="teamSelectScreen">
+            <div class="screen-content">
+                <div class="setup-progress">
+                    <div class="progress-step active"></div>
+                    <div class="progress-step active"></div>
+                    <div class="progress-step" id="step3b"></div>
+                </div>
+
+                <div class="card">
+                    <h2 id="currentParticipant">Participant Selection</h2>
+                    <p class="info-text" style="margin-bottom: 1rem;">
+                        Picks remaining: <strong id="picksRemaining">6</strong> for <strong id="participantName">Team</strong>
+                    </p>
+                    <div class="team-grid" id="teamSelectionGrid"></div>
+                    <button onclick="confirmTeamSelection()" style="margin-top: 2rem;">Confirm and Next Player</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="screen" id="dashboardScreen">
+            <div class="screen-content">
+                <div class="card">
+                    <h2>Leaderboard</h2>
+                    <div class="leaderboard" id="leaderboard"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Latest Matches</h2>
+                    <div id="matchFeed"></div>
+                </div>
+
+                <div class="card" id="newsCard" style="display: none;">
+                    <h2>World Cup News</h2>
+                    <div id="newsFeed"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <h2 class="modal-title">Settings</h2>
+            
+            <div class="settings-group">
+                <h3>API Configuration</h3>
+                <div class="participant-input-group">
+                    <label for="settingsApiKey">Anthropic API Key</label>
+                    <input type="password" id="settingsApiKey" />
+                </div>
+                <button onclick="saveApiKey()" style="width: 100%; margin-top: 1rem;">Save API Key</button>
+            </div>
+
+            <div class="settings-group">
+                <h3>Shared Data</h3>
+                <div class="participant-input-group">
+                    <label for="shareCode">Share Code (send this to others to join)</label>
+                    <input type="text" id="shareCode" readonly />
+                </div>
+                <button class="secondary" onclick="copyShareCode()" style="width: 100%;">Copy Share Code</button>
+            </div>
+
+            <div class="settings-group">
+                <h3>Data Management</h3>
+                <button class="secondary" onclick="resetSweepstake()" style="width: 100%;">Reset Sweepstake</button>
+            </div>
+
+            <button onclick="closeSettings()" style="width: 100%; margin-top: 2rem;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const TEAMS = [
+            { name: 'USA', code: 'US', flag: '🇺🇸' },
+            { name: 'Mexico', code: 'MX', flag: '🇲🇽' },
+            { name: 'Canada', code: 'CA', flag: '🇨🇦' },
+            { name: 'England', code: 'GB', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+            { name: 'France', code: 'FR', flag: '🇫🇷' },
+            { name: 'Germany', code: 'DE', flag: '🇩🇪' },
+            { name: 'Spain', code: 'ES', flag: '🇪🇸' },
+            { name: 'Italy', code: 'IT', flag: '🇮🇹' },
+            { name: 'Netherlands', code: 'NL', flag: '🇳🇱' },
+            { name: 'Portugal', code: 'PT', flag: '🇵🇹' },
+            { name: 'Belgium', code: 'BE', flag: '🇧🇪' },
+            { name: 'Switzerland', code: 'CH', flag: '🇨🇭' },
+            { name: 'Austria', code: 'AT', flag: '🇦🇹' },
+            { name: 'Czechia', code: 'CZ', flag: '🇨🇿' },
+            { name: 'Poland', code: 'PL', flag: '🇵🇱' },
+            { name: 'Ukraine', code: 'UA', flag: '🇺🇦' },
+            { name: 'Serbia', code: 'RS', flag: '🇷🇸' },
+            { name: 'Croatia', code: 'HR', flag: '🇭🇷' },
+            { name: 'Denmark', code: 'DK', flag: '🇩🇰' },
+            { name: 'Sweden', code: 'SE', flag: '🇸🇪' },
+            { name: 'Argentina', code: 'AR', flag: '🇦🇷' },
+            { name: 'Brazil', code: 'BR', flag: '🇧🇷' },
+            { name: 'Uruguay', code: 'UY', flag: '🇺🇾' },
+            { name: 'Colombia', code: 'CO', flag: '🇨🇴' },
+            { name: 'Chile', code: 'CL', flag: '🇨🇱' },
+            { name: 'Ecuador', code: 'EC', flag: '🇪🇨' },
+            { name: 'Peru', code: 'PE', flag: '🇵🇪' },
+            { name: 'Paraguay', code: 'PY', flag: '🇵🇾' },
+            { name: 'Venezuela', code: 'VE', flag: '🇻🇪' },
+            { name: 'Costa Rica', code: 'CR', flag: '🇨🇷' },
+            { name: 'Panama', code: 'PA', flag: '🇵🇦' },
+            { name: 'Honduras', code: 'HN', flag: '🇭🇳' },
+            { name: 'Jamaica', code: 'JM', flag: '🇯🇲' },
+            { name: 'Japan', code: 'JP', flag: '🇯🇵' },
+            { name: 'South Korea', code: 'KR', flag: '🇰🇷' },
+            { name: 'Iran', code: 'IR', flag: '🇮🇷' },
+            { name: 'Saudi Arabia', code: 'SA', flag: '🇸🇦' },
+            { name: 'Australia', code: 'AU', flag: '🇦🇺' },
+            { name: 'New Zealand', code: 'NZ', flag: '🇳🇿' },
+            { name: 'Morocco', code: 'MA', flag: '🇲🇦' },
+            { name: 'Egypt', code: 'EG', flag: '🇪🇬' },
+            { name: 'Nigeria', code: 'NG', flag: '🇳🇬' },
+            { name: 'Senegal', code: 'SN', flag: '🇸🇳' },
+            { name: 'Cameroon', code: 'CM', flag: '🇨🇲' },
+            { name: 'Ghana', code: 'GH', flag: '🇬🇭' },
+            { name: 'Tunisia', code: 'TN', flag: '🇹🇳' },
+            { name: 'Algeria', code: 'DZ', flag: '🇩🇿' },
+            { name: 'Uzbekistan', code: 'UZ', flag: '🇺🇿' }
+        ];
+
+        const SCORING = {
+            groupWin: 3,
+            draw: 1,
+            ro32: 5,
+            ro16: 10,
+            qf: 15,
+            sf: 20,
+            runnerUp: 20,
+            winner: 50,
+            topScorer: 10
+        };
+
+        let appState = {
+            participants: ['Andy', 'Ajit', 'Ian', 'Lisa', 'Alison', 'Paul', 'George', 'Nick'],
+            teamAssignments: {},
+            matches: [],
+            news: [],
+            shareCode: null,
+            currentSetupStep: 0,
+            selectedTeams: [],
+            setupComplete: false
+        };
+
+        function initializeApp() {
+            loadFromLocalStorage();
+            generateShareCode();
+            
+            if (Object.keys(appState.teamAssignments).length === 8) {
+                showScreen('dashboardScreen');
+                updateDashboard();
+            } else {
+                showScreen('welcomeScreen');
+            }
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem('wc2026_state');
+            if (stored) {
+                const loaded = JSON.parse(stored);
+                appState = { ...appState, ...loaded };
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('wc2026_state', JSON.stringify({
+                participants: appState.participants,
+                teamAssignments: appState.teamAssignments,
+                matches: appState.matches,
+                news: appState.news,
+                shareCode: appState.shareCode,
+                setupComplete: appState.setupComplete
+            }));
+        }
+
+        function generateShareCode() {
+            if (!appState.shareCode) {
+                appState.shareCode = Math.random().toString(36).substr(2, 9).toUpperCase();
+                saveToLocalStorage();
+            }
+            document.getElementById('shareCode').value = appState.shareCode;
+        }
+
+        function startWithDefaults() {
+            appState.setupComplete = false;
+            appState.selectedTeams = [];
+            appState.currentSetupStep = 0;
+            appState.teamAssignments = {};
+            appState.participants.forEach(p => {
+                appState.teamAssignments[p] = [];
+            });
+            saveToLocalStorage();
+            showScreen('teamSelectScreen');
+            renderTeamSelection();
+        }
+
+        function startNewSweepstake() {
+            appState.selectedTeams = [];
+            appState.currentSetupStep = 0;
+            showScreen('setupScreen');
+            renderParticipantInputs();
+        }
+
+        function renderParticipantInputs() {
+            const container = document.getElementById('participantInputs');
+            container.innerHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const input = document.createElement('div');
+                input.className = 'participant-input-group';
+                input.innerHTML = `
+                    <label>Participant ${i + 1}</label>
+                    <input type="text" id="participant${i}" placeholder="Name" value="${appState.participants[i] || ''}" />
+                `;
+                container.appendChild(input);
+            }
+        }
+
+        function proceedToTeamSelection() {
+            const names = [];
+            for (let i = 0; i < 8; i++) {
+                const name = document.getElementById(`participant${i}`).value.trim();
+                if (!name) {
+                    showToast('Please enter all participant names');
+                    return;
+                }
+                names.push(name);
+            }
+            appState.participants = names;
+            appState.teamAssignments = {};
+            appState.selectedTeams = [];
+            names.forEach(name => {
+                appState.teamAssignments[name] = [];
+            });
+            appState.currentSetupStep = 0;
+            saveToLocalStorage();
+            showScreen('teamSelectScreen');
+            renderTeamSelection();
+        }
+
+        function renderTeamSelection() {
+            const currentParticipant = appState.participants[appState.currentSetupStep];
+            document.getElementById('currentParticipant').textContent = `${currentParticipant}'s Teams`;
+            document.getElementById('participantName').textContent = currentParticipant;
+            
+            appState.selectedTeams = appState.teamAssignments[currentParticipant] || [];
+            updateTeamGrid();
+        }
+
+        function updateTeamGrid() {
+            const grid = document.getElementById('teamSelectionGrid');
+            grid.innerHTML = '';
+            
+            TEAMS.forEach(team => {
+                const tile = document.createElement('div');
+                tile.className = 'team-tile';
+                
+                const isSelected = appState.selectedTeams.includes(team.name);
+                const isAssigned = Object.values(appState.teamAssignments).flat().includes(team.name) && !isSelected;
+                
+                if (isSelected) tile.classList.add('selected');
+                if (isAssigned) tile.classList.add('assigned');
+                if (!isSelected && isAssigned) tile.classList.add('unavailable');
+                
+                tile.innerHTML = `
+                    <div class="team-flag">${team.flag}</div>
+                    <div class="team-name">${team.name}</div>
+                    ${isAssigned && !isSelected ? `<div class="team-owner">${getTeamOwner(team.name)}</div>` : ''}
+                `;
+                
+                if (!isAssigned || isSelected) {
+                    tile.onclick = () => toggleTeamSelection(team.name);
+                }
+                
+                grid.appendChild(tile);
+            });
+            
+            document.getElementById('picksRemaining').textContent = 6 - appState.selectedTeams.length;
+        }
+
+        function toggleTeamSelection(teamName) {
+            const index = appState.selectedTeams.indexOf(teamName);
+            if (index > -1) {
+                appState.selectedTeams.splice(index, 1);
+            } else if (appState.selectedTeams.length < 6) {
+                appState.selectedTeams.push(teamName);
+            } else {
+                showToast('You can only select 6 teams');
+                return;
+            }
+            updateTeamGrid();
+        }
+
+        function getTeamOwner(teamName) {
+            for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
+                if (teams.includes(teamName)) return owner;
+            }
+            return '';
+        }
+
+        function confirmTeamSelection() {
+            if (appState.selectedTeams.length !== 6) {
+                showToast('Please select exactly 6 teams');
+                return;
+            }
+            
+            const currentParticipant = appState.participants[appState.currentSetupStep];
+            appState.teamAssignments[currentParticipant] = [...appState.selectedTeams];
+            saveToLocalStorage();
+            
+            appState.currentSetupStep++;
+            if (appState.currentSetupStep < appState.participants.length) {
+                renderTeamSelection();
+            } else {
+                appState.setupComplete = true;
+                saveToLocalStorage();
+                showScreen('dashboardScreen');
+                updateDashboard();
+                showToast('✓ Setup complete! All teams assigned.');
+            }
+        }
+
+        function updateDashboard() {
+            renderLeaderboard();
+            renderMatchFeed();
+            renderNews();
+        }
+
+        function renderLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            const scores = calculateScores();
+            const sortedScores = Object.entries(scores)
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, score], index) => ({ name, score, rank: index + 1 }));
+            
+            leaderboard.innerHTML = sortedScores.map((entry, index) => `
+                <div class="leaderboard-row">
+                    <div class="leaderboard-rank">${entry.rank}</div>
+                    <div class="leaderboard-name">${entry.name}</div>
+                    <div class="leaderboard-movement"><span class="movement-up">↑</span></div>
+                    <div class="leaderboard-points">${entry.score}</div>
+                </div>
+            `).join('');
+            
+            const editDiv = document.createElement('div');
+            editDiv.style.marginTop = '2rem';
+            editDiv.innerHTML = '<button class="secondary" onclick="editParticipantNames()" style="width: 100%;">✏️ Edit Participant Names</button>';
+            leaderboard.appendChild(editDiv);
+        }
+
+        function calculateScores() {
+            const scores = {};
+            appState.participants.forEach(p => scores[p] = 0);
+            
+            appState.matches.forEach(match => {
+                for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
+                    if (teams.includes(match.home_team)) {
+                        if (match.home_score > match.away_score) {
+                            scores[owner] += SCORING.groupWin;
+                        } else if (match.home_score === match.away_score) {
+                            scores[owner] += SCORING.draw;
+                        }
+                    }
+                    if (teams.includes(match.away_team)) {
+                        if (match.away_score > match.home_score) {
+                            scores[owner] += SCORING.groupWin;
+                        } else if (match.home_score === match.away_score) {
+                            scores[owner] += SCORING.draw;
+                        }
+                    }
+                }
+            });
+            
+            return scores;
+        }
+
+        function renderMatchFeed() {
+            const feed = document.getElementById('matchFeed');
+            if (appState.matches.length === 0) {
+                feed.innerHTML = '<p class="info-text">🏟️ Tournament begins June 2026. Matches and live scoring will appear here. Click "Sync Latest" to check for updates.</p>';
+                return;
+            }
+            
+            feed.innerHTML = appState.matches.slice(-5).reverse().map(match => `
+                <div class="match-item">
+                    <div class="match-header">
+                        <div class="match-stage">${match.stage}</div>
+                    </div>
+                    <div class="match-score">
+                        <div class="team-matchup">
+                            <div class="team-matchup-name">${match.home_team}</div>
+                        </div>
+                        <div class="match-result">${match.home_score} <span class="match-vs">vs</span> ${match.away_score}</div>
+                        <div class="team-matchup">
+                            <div class="team-matchup-name">${match.away_team}</div>
+                        </div>
+                    </div>
+                    <div class="match-commentary">"${match.quip}"</div>
+                </div>
+            `).join('');
+        }
+
+        function renderNews() {
+            const newsCard = document.getElementById('newsCard');
+            const newsFeed = document.getElementById('newsFeed');
+            
+            if (appState.news.length === 0) {
+                newsCard.style.display = 'none';
+                return;
+            }
+            
+            newsCard.style.display = 'block';
+            newsFeed.innerHTML = appState.news.slice(0, 5).map(item => `
+                <div class="news-item">
+                    <div class="news-headline">${item.headline}</div>
+                    <div class="news-summary">${item.summary}</div>
+                    <div class="news-time">${new Date(item.timestamp).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+        }
+
+        async function showAddMatch() {
+            const modal = document.getElementById('settingsModal');
+            const content = modal.querySelector('.modal-content');
+            
+            const teamOptions = TEAMS.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
+            const stageOptions = ['group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
+            const stageSelect = stageOptions.map(s => `<option value="${s}">${s.toUpperCase()}</option>`).join('');
+            
+            content.innerHTML = `
+                <h2 class="modal-title">Add Match Result</h2>
+                
+                <div class="settings-group">
+                    <h3>Home Team</h3>
+                    <select id="homeTeam" style="width: 100%; padding: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(79,195,247,0.2); border-radius: 8px; color: #E8ECED; font-family: 'Manrope', sans-serif;">
+                        <option value="">Select team...</option>
+                        ${teamOptions}
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="settings-group">
+                        <h3>Home Score</h3>
+                        <input type="number" id="homeScore" min="0" max="10" value="0" style="width: 100%;" />
+                    </div>
+                    <div class="settings-group">
+                        <h3>Away Score</h3>
+                        <input type="number" id="awayScore" min="0" max="10" value="0" style="width: 100%;" />
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Away Team</h3>
+                    <select id="awayTeam" style="width: 100%; padding: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(79,195,247,0.2); border-radius: 8px; color: #E8ECED; font-family: 'Manrope', sans-serif;">
+                        <option value="">Select team...</option>
+                        ${teamOptions}
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Stage</h3>
+                    <select id="stage" style="width: 100%; padding: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(79,195,247,0.2); border-radius: 8px; color: #E8ECED; font-family: 'Manrope', sans-serif;">
+                        ${stageSelect}
+                    </select>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Commentary (optional)</h3>
+                    <input type="text" id="quip" placeholder="e.g., 'Amazing comeback'" style="width: 100%;" />
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button onclick="saveMatch()" style="flex: 1;">Add Match</button>
+                    <button class="secondary" onclick="closeSettings()" style="flex: 1;">Cancel</button>
+                </div>
+            `;
+            modal.classList.add('active');
+        }
+
+        function saveMatch() {
+            const homeTeam = document.getElementById('homeTeam').value;
+            const awayTeam = document.getElementById('awayTeam').value;
+            const homeScore = parseInt(document.getElementById('homeScore').value);
+            const awayScore = parseInt(document.getElementById('awayScore').value);
+            const stage = document.getElementById('stage').value;
+            const quip = document.getElementById('quip').value || 'Match result recorded';
+
+            if (!homeTeam || !awayTeam) {
+                showToast('Please select both teams');
+                return;
+            }
+
+            if (homeTeam === awayTeam) {
+                showToast('Teams must be different');
+                return;
+            }
+
+            const match = {
+                match_id: 'm' + Date.now(),
+                home_team: homeTeam,
+                away_team: awayTeam,
+                home_score: homeScore,
+                away_score: awayScore,
+                stage: stage,
+                penalties_winner: null,
+                quip: quip
+            };
+
+            appState.matches.push(match);
+            saveToLocalStorage();
+            updateDashboard();
+            closeSettings();
+            showToast('✓ Match added to results');
+        }
+
+        function editParticipantNames() {
+            const modal = document.getElementById('settingsModal');
+            const content = modal.querySelector('.modal-content');
+            content.innerHTML = `
+                <h2 class="modal-title">Edit Participant Names</h2>
+                <p class="info-text" style="margin-bottom: 1.5rem;">Update names as needed. Teams stay assigned to each participant.</p>
+                <div id="editParticipantInputs"></div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button onclick="saveParticipantNames()" style="flex: 1;">Save Changes</button>
+                    <button class="secondary" onclick="closeSettings()" style="flex: 1;">Cancel</button>
+                </div>
+            `;
+            
+            const inputs = document.getElementById('editParticipantInputs');
+            appState.participants.forEach((name, i) => {
+                const group = document.createElement('div');
+                group.className = 'participant-input-group';
+                group.innerHTML = `
+                    <label>Participant ${i + 1}</label>
+                    <input type="text" id="editParticipant${i}" value="${name}" />
+                `;
+                inputs.appendChild(group);
+            });
+            
+            modal.classList.add('active');
+        }
+
+        function saveParticipantNames() {
+            const newNames = [];
+            for (let i = 0; i < 8; i++) {
+                const name = document.getElementById(`editParticipant${i}`).value.trim();
+                if (!name) {
+                    showToast('Please enter all names');
+                    return;
+                }
+                newNames.push(name);
+            }
+            
+            const oldToNew = {};
+            appState.participants.forEach((oldName, i) => {
+                oldToNew[oldName] = newNames[i];
+            });
+            
+            const newAssignments = {};
+            Object.entries(appState.teamAssignments).forEach(([oldName, teams]) => {
+                newAssignments[oldToNew[oldName]] = teams;
+            });
+            
+            appState.participants = newNames;
+            appState.teamAssignments = newAssignments;
+            saveToLocalStorage();
+            updateDashboard();
+            closeSettings();
+            showToast('✓ Names updated. Teams preserved.');
+        }
+
+        function showSettings() {
+            const modal = document.getElementById('settingsModal');
+            modal.querySelector('.modal-content').innerHTML = `
+                <h2 class="modal-title">Settings</h2>
+                
+                <div class="settings-group">
+                    <h3>Shared Data</h3>
+                    <div class="participant-input-group">
+                        <label>Share Code</label>
+                        <input type="text" id="shareCode" value="${appState.shareCode}" readonly />
+                    </div>
+                    <button class="secondary" onclick="copyShareCode()" style="width: 100%;">Copy Share Code</button>
+                    <p class="info-text" style="margin-top: 1rem;">Share this code with others. They can load the same sweepstake.</p>
+                </div>
+
+                <div class="settings-group">
+                    <h3>Data Management</h3>
+                    <button class="secondary" onclick="resetSweepstake()" style="width: 100%;">Reset Sweepstake</button>
+                </div>
+
+                <button onclick="closeSettings()" style="width: 100%; margin-top: 2rem;">Close</button>
+            `;
+            modal.classList.add('active');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function copyShareCode() {
+            navigator.clipboard.writeText(appState.shareCode);
+            showToast('✓ Share code copied');
+        }
+
+        function resetSweepstake() {
+            if (confirm('Reset all data? This cannot be undone.')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>
