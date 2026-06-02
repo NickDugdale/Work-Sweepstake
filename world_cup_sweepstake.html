@@ -614,6 +614,10 @@
             if (stored) {
                 appState = { ...appState, ...JSON.parse(stored) };
             }
+            // Remove any stored matches without valid numeric scores (e.g. unplayed fixtures)
+            appState.matches = (appState.matches || []).filter(m =>
+                m && typeof m.home_score === 'number' && typeof m.away_score === 'number'
+            );
             const apiKey = localStorage.getItem('wc2026_apiKey');
             if (apiKey) appState.apiKey = apiKey;
         }
@@ -883,11 +887,14 @@
 
         function renderMatchFeed() {
             const feed = document.getElementById('matchFeed');
-            if (appState.matches.length === 0) {
-                feed.innerHTML = '<p class="info-text">🏟️ Tournament begins June 2026. Click "Sync Latest" to pull live match results.</p>';
+            const validMatches = (appState.matches || []).filter(m =>
+                m && typeof m.home_score === 'number' && typeof m.away_score === 'number'
+            );
+            if (validMatches.length === 0) {
+                feed.innerHTML = '<p class="info-text">🏟️ Tournament begins June 2026. Click "Sync Latest" to pull live match results once games have been played.</p>';
                 return;
             }
-            feed.innerHTML = appState.matches.slice(-8).reverse().map(match => {
+            feed.innerHTML = validMatches.slice(-8).reverse().map(match => {
                 const homeTeam = getTeam(match.home_team);
                 const awayTeam = getTeam(match.away_team);
                 return `
@@ -951,6 +958,7 @@
 
             try {
                 const matchData = await fetchMatchUpdates();
+                await new Promise(r => setTimeout(r, 1500));
                 const newsData = await fetchNews();
 
                 if (matchData.matches && matchData.matches.length > 0) {
@@ -1094,34 +1102,28 @@
                 },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-6',
-                    max_tokens: 1500,
-                    system: 'You provide World Cup 2026 match data. Use web search to find real results if available. Return ONLY valid JSON, no markdown, no extra text.',
+                    max_tokens: 1024,
+                    system: 'You provide World Cup 2026 match results. Use web search to find FINISHED matches only. Return ONLY valid JSON, no markdown.',
                     messages: [{
                         role: 'user',
-                        content: `Find the latest real World Cup 2026 match results. Only use these team names: ${teamList}. Return ONLY this JSON:
+                        content: `Find COMPLETED World Cup 2026 match results that have a final score. Do NOT include upcoming or unplayed fixtures. If no matches have been played yet, return an empty matches array. Only use these team names: ${teamList}. Return ONLY this JSON:
 {
   "matches": [
-    {
-      "match_id": "unique_id",
-      "home_team": "Team",
-      "away_team": "Team",
-      "home_score": 0,
-      "away_score": 0,
-      "stage": "group",
-      "penalties_winner": null,
-      "quip": "One-line commentary"
-    }
+    { "match_id": "unique_id", "home_team": "Team", "away_team": "Team", "home_score": 2, "away_score": 1, "stage": "group", "penalties_winner": null, "quip": "One-line commentary" }
   ],
   "top_scorer_team": null
 }`
                     }],
-                    tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
                 })
             });
 
             if (!response.ok) {
                 const err = await response.text();
-                throw new Error(`API ${response.status}: ${err.slice(0, 100)}`);
+                if (response.status === 429) {
+                    throw new Error('Rate limit hit — wait ~60s and try again, or sync less often.');
+                }
+                throw new Error(`API ${response.status}: ${err.slice(0, 80)}`);
             }
 
             const data = await response.json();
@@ -1129,7 +1131,13 @@
             if (!textBlock) return { matches: [] };
             const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
             if (!jsonMatch) return { matches: [] };
-            return JSON.parse(jsonMatch[0]);
+            const parsed = JSON.parse(jsonMatch[0]);
+            // Only keep matches with real, numeric final scores
+            parsed.matches = (parsed.matches || []).filter(m =>
+                m && m.home_team && m.away_team &&
+                typeof m.home_score === 'number' && typeof m.away_score === 'number'
+            );
+            return parsed;
         }
 
         async function fetchNews() {
@@ -1144,7 +1152,7 @@
                     },
                     body: JSON.stringify({
                         model: 'claude-sonnet-4-6',
-                        max_tokens: 1000,
+                        max_tokens: 768,
                         system: 'You provide real World Cup 2026 news. Use web search. Return ONLY valid JSON, no markdown.',
                         messages: [{
                             role: 'user',
@@ -1155,7 +1163,7 @@
   ]
 }`
                         }],
-                        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+                        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
                     })
                 });
 
