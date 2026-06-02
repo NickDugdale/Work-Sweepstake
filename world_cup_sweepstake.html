@@ -1060,31 +1060,43 @@
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    if (!res.ok) throw new Error('publish failed');
-                    const location = res.headers.get('Location') || res.headers.get('location');
-                    if (location) {
-                        appState.blobId = location.split('/').pop();
-                        saveToLocalStorage();
+                    if (!res.ok) {
+                        const t = await res.text();
+                        throw new Error(`publish HTTP ${res.status}: ${t.slice(0, 80)}`);
                     }
+                    const headerId = res.headers.get('x-jsonblob');
+                    const loc = res.headers.get('location') || res.headers.get('Location') || '';
+                    const blobId = headerId || (loc ? loc.split('/').pop() : null);
+                    if (!blobId) {
+                        throw new Error('publish succeeded but blob ID was not readable (CORS header hidden)');
+                    }
+                    appState.blobId = blobId;
+                    saveToLocalStorage();
+                    return true;
                 } else {
                     const res = await fetch(`${JSONBLOB_BASE}/${appState.blobId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    if (!res.ok) throw new Error('update failed');
+                    if (!res.ok) {
+                        const t = await res.text();
+                        throw new Error(`update HTTP ${res.status}: ${t.slice(0, 80)}`);
+                    }
+                    return true;
                 }
             } catch (e) {
                 console.error('Publish error:', e);
-                showToast('⚠️ Synced locally, but publishing to viewers failed');
+                showToast('⚠️ Publish failed: ' + e.message);
+                return false;
             }
         }
 
         async function manualPublish() {
             appState.lastUpdated = new Date().toISOString();
             saveToLocalStorage();
-            await publishToViewers();
-            if (appState.blobId) {
+            const ok = await publishToViewers();
+            if (ok && appState.blobId) {
                 showToast('✓ Published! Viewer link ready in Settings');
                 showSettings();
             }
