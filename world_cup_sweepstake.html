@@ -6,11 +6,7 @@
     <title>World Cup 2026 Office Sweepstake</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             font-family: 'Manrope', sans-serif;
@@ -20,16 +16,9 @@
             overflow: hidden;
         }
 
-        body {
-            display: flex;
-            flex-direction: column;
-        }
+        body { display: flex; flex-direction: column; }
 
-        .app-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
+        .app-container { flex: 1; display: flex; overflow: hidden; }
 
         header {
             background: linear-gradient(135deg, #0B1F33 0%, #0D2847 100%);
@@ -50,11 +39,7 @@
             background-clip: text;
         }
 
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
+        .header-actions { display: flex; gap: 1rem; align-items: center; }
 
         button {
             background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
@@ -69,19 +54,9 @@
             font-size: 0.95rem;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(79, 195, 247, 0.25);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79, 195, 247, 0.25); }
+        button:active { transform: translateY(0); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         button.secondary {
             background: rgba(79, 195, 247, 0.1);
@@ -89,27 +64,11 @@
             border: 1px solid rgba(79, 195, 247, 0.3);
         }
 
-        button.secondary:hover {
-            background: rgba(79, 195, 247, 0.15);
-        }
+        button.secondary:hover { background: rgba(79, 195, 247, 0.15); }
 
-        .screen {
-            display: none;
-            flex: 1;
-            overflow-y: auto;
-            padding: 2rem;
-        }
-
-        .screen.active {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .screen-content {
-            max-width: 1400px;
-            width: 100%;
-            margin: 0 auto;
-        }
+        .screen { display: none; flex: 1; overflow-y: auto; padding: 2rem; }
+        .screen.active { display: flex; flex-direction: column; }
+        .screen-content { max-width: 1400px; width: 100%; margin: 0 auto; }
 
         .card {
             background: linear-gradient(135deg, rgba(13, 40, 71, 0.8) 0%, rgba(20, 50, 80, 0.6) 100%);
@@ -164,31 +123,22 @@
             cursor: not-allowed;
         }
 
-        .team-tile.unavailable {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
+        .team-tile.unavailable { opacity: 0.3; cursor: not-allowed; }
 
         .team-flag {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+            width: 48px;
+            height: 32px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin: 0 auto 0.5rem;
+            display: block;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
-        .team-name {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #E8ECED;
-        }
+        .team-name { font-size: 0.85rem; font-weight: 600; color: #E8ECED; }
+        .team-owner { font-size: 0.75rem; color: #7DB8D8; margin-top: 0.25rem; }
 
-        .team-owner {
-            font-size: 0.75rem;
-            color: #7DB8D8;
-            margin-top: 0.25rem;
-        }
-
-        .participant-input-group {
-            margin-bottom: 1.5rem;
-        }
+        .participant-input-group { margin-bottom: 1.5rem; }
 
         .participant-input-group label {
             display: block;
@@ -197,7 +147,7 @@
             color: #7DB8D8;
         }
 
-        input[type="text"], input[type="password"], input[type="email"] {
+        input[type="text"], input[type="password"], input[type="number"], select {
             width: 100%;
             padding: 0.85rem;
             background: rgba(0, 0, 0, 0.3);
@@ -209,16 +159,14 @@
             transition: all 0.3s ease;
         }
 
-        input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus {
+        input:focus, select:focus {
             outline: none;
             background: rgba(0, 0, 0, 0.5);
             border-color: #4FC3F7;
             box-shadow: 0 0 15px rgba(79, 195, 247, 0.2);
         }
 
-        .leaderboard {
-            margin-top: 1.5rem;
-        }
+        .leaderboard { margin-top: 1.5rem; }
 
         .leaderboard-row {
             background: rgba(0, 0, 0, 0.2);
@@ -234,10 +182,7 @@
             transition: all 0.3s ease;
         }
 
-        .leaderboard-row:hover {
-            background: rgba(79, 195, 247, 0.08);
-            transform: translateX(4px);
-        }
+        .leaderboard-row:hover { background: rgba(79, 195, 247, 0.08); transform: translateX(4px); }
 
         .leaderboard-rank {
             font-family: 'Outfit', sans-serif;
@@ -250,24 +195,15 @@
             text-align: center;
         }
 
-        .leaderboard-name {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
+        .leaderboard-name { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; }
+        .leaderboard-name-row { display: flex; flex-direction: column; gap: 0.5rem; }
+        .leaderboard-teams { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+        .leaderboard-teams img { width: 24px; height: 16px; object-fit: cover; border-radius: 2px; }
 
-        .leaderboard-movement {
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
-        .movement-up {
-            color: #4CAF50;
-        }
-
-        .movement-down {
-            color: #FF6B6B;
-        }
+        .leaderboard-movement { font-size: 0.9rem; text-align: center; }
+        .movement-up { color: #4CAF50; }
+        .movement-down { color: #FF6B6B; }
+        .movement-same { color: #7DB8D8; }
 
         .leaderboard-points {
             font-family: 'Outfit', sans-serif;
@@ -277,6 +213,27 @@
             text-align: right;
         }
 
+        .player-breakdown {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(79, 195, 247, 0.1);
+            display: none;
+            grid-column: 1 / -1;
+        }
+
+        .player-breakdown.open { display: block; }
+
+        .breakdown-team {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .breakdown-team img { width: 28px; height: 18px; object-fit: cover; border-radius: 3px; }
+        .breakdown-points { margin-left: auto; color: #4FC3F7; font-weight: 600; }
+
         .match-item {
             background: rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(79, 195, 247, 0.1);
@@ -285,12 +242,7 @@
             margin-bottom: 1rem;
         }
 
-        .match-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
+        .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 
         .match-stage {
             font-size: 0.75rem;
@@ -302,140 +254,60 @@
             text-transform: uppercase;
         }
 
-        .match-score {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            justify-content: center;
-        }
+        .match-score { display: flex; gap: 1rem; align-items: center; justify-content: center; }
+        .team-matchup { text-align: center; flex: 1; }
+        .team-matchup img { width: 40px; height: 27px; object-fit: cover; border-radius: 3px; margin-bottom: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        .team-matchup-name { font-weight: 600; }
+        .match-result { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: #4FC3F7; }
+        .match-vs { color: #7DB8D8; font-size: 0.85rem; padding: 0 0.5rem; }
+        .match-commentary { font-size: 0.9rem; color: #7DB8D8; margin-top: 0.75rem; font-style: italic; text-align: center; }
 
-        .team-matchup {
-            text-align: center;
-            flex: 1;
-        }
+        .news-item { padding: 1rem; border-bottom: 1px solid rgba(79, 195, 247, 0.1); margin-bottom: 1rem; }
+        .news-item:last-child { border-bottom: none; margin-bottom: 0; }
+        .news-headline { font-weight: 600; color: #4FC3F7; margin-bottom: 0.5rem; }
+        .news-summary { font-size: 0.9rem; color: #7DB8D8; line-height: 1.5; }
+        .news-time { font-size: 0.75rem; color: #556C7D; margin-top: 0.5rem; }
 
-        .team-matchup-name {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+        .news-item.movement {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(79, 195, 247, 0.08) 100%);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            animation: slideIn 0.4s ease;
         }
+        .news-item.movement .news-headline { color: #6FD98C; }
 
-        .match-result {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #4FC3F7;
-        }
-
-        .match-vs {
-            color: #7DB8D8;
-            font-size: 0.85rem;
-            padding: 0 0.5rem;
-        }
-
-        .match-commentary {
-            font-size: 0.9rem;
-            color: #7DB8D8;
-            margin-top: 0.75rem;
-            font-style: italic;
-        }
-
-        .match-points {
+        .viewer-banner {
             background: rgba(79, 195, 247, 0.1);
-            border-left: 3px solid #4FC3F7;
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-
-        .news-panel {
-            background: rgba(79, 195, 247, 0.08);
-            border: 1px solid rgba(79, 195, 247, 0.2);
+            border: 1px solid rgba(79, 195, 247, 0.25);
             border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .news-item {
-            padding: 1rem;
-            border-bottom: 1px solid rgba(79, 195, 247, 0.1);
-            margin-bottom: 1rem;
-        }
-
-        .news-item:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .news-headline {
-            font-weight: 600;
-            color: #4FC3F7;
-            margin-bottom: 0.5rem;
-        }
-
-        .news-summary {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
             font-size: 0.9rem;
             color: #7DB8D8;
-            line-height: 1.5;
         }
+        .viewer-banner strong { color: #4FC3F7; }
 
-        .news-time {
-            font-size: 0.75rem;
-            color: #556C7D;
-            margin-top: 0.5rem;
-        }
+        .settings-group { margin-bottom: 2rem; }
+        .settings-group h3 { font-family: 'Outfit', sans-serif; font-size: 1rem; margin-bottom: 1rem; color: #4FC3F7; }
 
-        .settings-group {
-            margin-bottom: 2rem;
-        }
+        .info-text { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
 
-        .settings-group h3 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            color: #4FC3F7;
-        }
-
-        .info-text {
-            font-size: 0.9rem;
-            color: #7DB8D8;
-            line-height: 1.6;
-        }
-
-        .setup-progress {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .progress-step {
-            flex: 1;
-            height: 4px;
-            background: rgba(79, 195, 247, 0.1);
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        .progress-step.active {
-            background: linear-gradient(90deg, #4FC3F7 0%, #29B6F6 100%);
-        }
+        .setup-progress { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+        .progress-step { flex: 1; height: 4px; background: rgba(79, 195, 247, 0.1); border-radius: 2px; overflow: hidden; }
+        .progress-step.active { background: linear-gradient(90deg, #4FC3F7 0%, #29B6F6 100%); }
 
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
             align-items: center;
             justify-content: center;
         }
 
-        .modal.active {
-            display: flex;
-        }
+        .modal.active { display: flex; }
 
         .modal-content {
             background: linear-gradient(135deg, #0D2847 0%, #0B1F33 100%);
@@ -448,12 +320,7 @@
             overflow-y: auto;
         }
 
-        .modal-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.3rem;
-            margin-bottom: 1.5rem;
-            color: #4FC3F7;
-        }
+        .modal-title { font-family: 'Outfit', sans-serif; font-size: 1.3rem; margin-bottom: 1.5rem; color: #4FC3F7; }
 
         .toast {
             position: fixed;
@@ -466,70 +333,51 @@
             font-weight: 600;
             animation: slideIn 0.3s ease;
             z-index: 2000;
-            max-width: 300px;
+            max-width: 320px;
         }
 
         @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .spinner {
+            display: inline-block;
+            border: 2px solid rgba(11, 31, 51, 0.3);
+            border-top: 2px solid #0B1F33;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+            vertical-align: middle;
         }
 
         @media (max-width: 768px) {
-            header {
-                padding: 1rem;
-                flex-wrap: wrap;
-                gap: 1rem;
-            }
-
-            h1 {
-                font-size: 1.2rem;
-            }
-
-            .screen {
-                padding: 1rem;
-            }
-
-            .card {
-                padding: 1.5rem;
-            }
-
-            .team-grid {
-                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            }
-
-            .leaderboard-row {
-                grid-template-columns: 40px 1fr 60px;
-                padding: 1rem;
-            }
-
-            .leaderboard-movement {
-                display: none;
-            }
-
-            .header-actions {
-                width: 100%;
-                flex-wrap: wrap;
-            }
-
-            button {
-                flex: 1;
-                min-width: 120px;
-            }
+            header { padding: 1rem; flex-wrap: wrap; gap: 1rem; }
+            h1 { font-size: 1.2rem; }
+            .screen { padding: 1rem; }
+            .card { padding: 1.5rem; }
+            .team-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+            .leaderboard-row { grid-template-columns: 40px 1fr 60px; padding: 1rem; }
+            .leaderboard-movement { display: none; }
+            .header-actions { width: 100%; flex-wrap: wrap; }
+            button { flex: 1; min-width: 120px; }
         }
     </style>
 </head>
 <body>
     <header>
         <h1>⚽ World Cup 2026 Sweepstake</h1>
-        <div class="header-actions">
+        <div class="header-actions" id="masterActions">
             <button class="secondary" onclick="showSettings()">Settings</button>
-            <button id="syncBtn" onclick="showAddMatch()">+ Add Match</button>
+            <button id="syncBtn" onclick="syncData()">Sync Latest</button>
+        </div>
+        <div class="header-actions" id="viewerActions" style="display: none;">
+            <span style="font-size: 0.85rem; color: #7DB8D8; align-self: center;">👁️ Viewer</span>
+            <button id="refreshBtn" onclick="viewerRefresh()">↻ Refresh</button>
         </div>
     </header>
 
@@ -538,7 +386,16 @@
             <div class="screen-content">
                 <div class="card">
                     <h2>Welcome to the World Cup Sweepstake</h2>
-                    <p class="info-text" style="margin-bottom: 2rem;">Manage your office sweepstake. Add match results as the tournament progresses and watch the leaderboard update in real-time.</p>
+                    <p class="info-text" style="margin-bottom: 2rem;">Manage your office sweepstake with live match updates and World Cup news, powered by the Claude API.</p>
+
+                    <div class="settings-group">
+                        <h3>API Key Setup</h3>
+                        <p class="info-text" style="margin-bottom: 1rem;">Enter your Anthropic API key to enable "Sync Latest" for live match results and news. You can add this later in Settings.</p>
+                        <div class="participant-input-group">
+                            <label for="apiKey">Anthropic API Key</label>
+                            <input type="password" id="apiKey" placeholder="sk-ant-... (optional)" />
+                        </div>
+                    </div>
 
                     <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
                         <button style="flex: 1; min-width: 150px;" onclick="startWithDefaults()">✅ Quick Start (Default Names)</button>
@@ -552,10 +409,9 @@
             <div class="screen-content">
                 <div class="setup-progress">
                     <div class="progress-step active"></div>
-                    <div class="progress-step" id="step2"></div>
-                    <div class="progress-step" id="step3"></div>
+                    <div class="progress-step"></div>
+                    <div class="progress-step"></div>
                 </div>
-
                 <div class="card">
                     <h2>Customize Participant Names</h2>
                     <p class="info-text" style="margin-bottom: 1.5rem;">Edit the participant names. You can change these anytime later.</p>
@@ -570,9 +426,8 @@
                 <div class="setup-progress">
                     <div class="progress-step active"></div>
                     <div class="progress-step active"></div>
-                    <div class="progress-step" id="step3b"></div>
+                    <div class="progress-step"></div>
                 </div>
-
                 <div class="card">
                     <h2 id="currentParticipant">Participant Selection</h2>
                     <p class="info-text" style="margin-bottom: 1rem;">
@@ -586,16 +441,15 @@
 
         <div class="screen" id="dashboardScreen">
             <div class="screen-content">
+                <div class="viewer-banner" id="viewerBanner" style="display: none;"></div>
                 <div class="card">
                     <h2>Leaderboard</h2>
                     <div class="leaderboard" id="leaderboard"></div>
                 </div>
-
                 <div class="card">
                     <h2>Latest Matches</h2>
                     <div id="matchFeed"></div>
                 </div>
-
                 <div class="card" id="newsCard" style="display: none;">
                     <h2>World Cup News</h2>
                     <div id="newsFeed"></div>
@@ -605,98 +459,77 @@
     </div>
 
     <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <h2 class="modal-title">Settings</h2>
-            
-            <div class="settings-group">
-                <h3>API Configuration</h3>
-                <div class="participant-input-group">
-                    <label for="settingsApiKey">Anthropic API Key</label>
-                    <input type="password" id="settingsApiKey" />
-                </div>
-                <button onclick="saveApiKey()" style="width: 100%; margin-top: 1rem;">Save API Key</button>
-            </div>
-
-            <div class="settings-group">
-                <h3>Shared Data</h3>
-                <div class="participant-input-group">
-                    <label for="shareCode">Share Code (send this to others to join)</label>
-                    <input type="text" id="shareCode" readonly />
-                </div>
-                <button class="secondary" onclick="copyShareCode()" style="width: 100%;">Copy Share Code</button>
-            </div>
-
-            <div class="settings-group">
-                <h3>Data Management</h3>
-                <button class="secondary" onclick="resetSweepstake()" style="width: 100%;">Reset Sweepstake</button>
-            </div>
-
-            <button onclick="closeSettings()" style="width: 100%; margin-top: 2rem;">Close</button>
-        </div>
+        <div class="modal-content"></div>
     </div>
 
     <script>
         const TEAMS = [
-            { name: 'USA', code: 'US', flag: '🇺🇸' },
-            { name: 'Mexico', code: 'MX', flag: '🇲🇽' },
-            { name: 'Canada', code: 'CA', flag: '🇨🇦' },
-            { name: 'England', code: 'GB', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
-            { name: 'France', code: 'FR', flag: '🇫🇷' },
-            { name: 'Germany', code: 'DE', flag: '🇩🇪' },
-            { name: 'Spain', code: 'ES', flag: '🇪🇸' },
-            { name: 'Italy', code: 'IT', flag: '🇮🇹' },
-            { name: 'Netherlands', code: 'NL', flag: '🇳🇱' },
-            { name: 'Portugal', code: 'PT', flag: '🇵🇹' },
-            { name: 'Belgium', code: 'BE', flag: '🇧🇪' },
-            { name: 'Switzerland', code: 'CH', flag: '🇨🇭' },
-            { name: 'Austria', code: 'AT', flag: '🇦🇹' },
-            { name: 'Czechia', code: 'CZ', flag: '🇨🇿' },
-            { name: 'Poland', code: 'PL', flag: '🇵🇱' },
-            { name: 'Ukraine', code: 'UA', flag: '🇺🇦' },
-            { name: 'Serbia', code: 'RS', flag: '🇷🇸' },
-            { name: 'Croatia', code: 'HR', flag: '🇭🇷' },
-            { name: 'Denmark', code: 'DK', flag: '🇩🇰' },
-            { name: 'Sweden', code: 'SE', flag: '🇸🇪' },
-            { name: 'Argentina', code: 'AR', flag: '🇦🇷' },
-            { name: 'Brazil', code: 'BR', flag: '🇧🇷' },
-            { name: 'Uruguay', code: 'UY', flag: '🇺🇾' },
-            { name: 'Colombia', code: 'CO', flag: '🇨🇴' },
-            { name: 'Chile', code: 'CL', flag: '🇨🇱' },
-            { name: 'Ecuador', code: 'EC', flag: '🇪🇨' },
-            { name: 'Peru', code: 'PE', flag: '🇵🇪' },
-            { name: 'Paraguay', code: 'PY', flag: '🇵🇾' },
-            { name: 'Venezuela', code: 'VE', flag: '🇻🇪' },
-            { name: 'Costa Rica', code: 'CR', flag: '🇨🇷' },
-            { name: 'Panama', code: 'PA', flag: '🇵🇦' },
-            { name: 'Honduras', code: 'HN', flag: '🇭🇳' },
-            { name: 'Jamaica', code: 'JM', flag: '🇯🇲' },
-            { name: 'Japan', code: 'JP', flag: '🇯🇵' },
-            { name: 'South Korea', code: 'KR', flag: '🇰🇷' },
-            { name: 'Iran', code: 'IR', flag: '🇮🇷' },
-            { name: 'Saudi Arabia', code: 'SA', flag: '🇸🇦' },
-            { name: 'Australia', code: 'AU', flag: '🇦🇺' },
-            { name: 'New Zealand', code: 'NZ', flag: '🇳🇿' },
-            { name: 'Morocco', code: 'MA', flag: '🇲🇦' },
-            { name: 'Egypt', code: 'EG', flag: '🇪🇬' },
-            { name: 'Nigeria', code: 'NG', flag: '🇳🇬' },
-            { name: 'Senegal', code: 'SN', flag: '🇸🇳' },
-            { name: 'Cameroon', code: 'CM', flag: '🇨🇲' },
-            { name: 'Ghana', code: 'GH', flag: '🇬🇭' },
-            { name: 'Tunisia', code: 'TN', flag: '🇹🇳' },
-            { name: 'Algeria', code: 'DZ', flag: '🇩🇿' },
-            { name: 'Uzbekistan', code: 'UZ', flag: '🇺🇿' }
+            { name: 'USA', code: 'us' },
+            { name: 'Mexico', code: 'mx' },
+            { name: 'Canada', code: 'ca' },
+            { name: 'England', code: 'gb-eng' },
+            { name: 'France', code: 'fr' },
+            { name: 'Germany', code: 'de' },
+            { name: 'Spain', code: 'es' },
+            { name: 'Italy', code: 'it' },
+            { name: 'Netherlands', code: 'nl' },
+            { name: 'Portugal', code: 'pt' },
+            { name: 'Belgium', code: 'be' },
+            { name: 'Switzerland', code: 'ch' },
+            { name: 'Austria', code: 'at' },
+            { name: 'Czechia', code: 'cz' },
+            { name: 'Poland', code: 'pl' },
+            { name: 'Ukraine', code: 'ua' },
+            { name: 'Serbia', code: 'rs' },
+            { name: 'Croatia', code: 'hr' },
+            { name: 'Denmark', code: 'dk' },
+            { name: 'Sweden', code: 'se' },
+            { name: 'Argentina', code: 'ar' },
+            { name: 'Brazil', code: 'br' },
+            { name: 'Uruguay', code: 'uy' },
+            { name: 'Colombia', code: 'co' },
+            { name: 'Chile', code: 'cl' },
+            { name: 'Ecuador', code: 'ec' },
+            { name: 'Peru', code: 'pe' },
+            { name: 'Paraguay', code: 'py' },
+            { name: 'Venezuela', code: 've' },
+            { name: 'Costa Rica', code: 'cr' },
+            { name: 'Panama', code: 'pa' },
+            { name: 'Honduras', code: 'hn' },
+            { name: 'Jamaica', code: 'jm' },
+            { name: 'Japan', code: 'jp' },
+            { name: 'South Korea', code: 'kr' },
+            { name: 'Iran', code: 'ir' },
+            { name: 'Saudi Arabia', code: 'sa' },
+            { name: 'Australia', code: 'au' },
+            { name: 'New Zealand', code: 'nz' },
+            { name: 'Morocco', code: 'ma' },
+            { name: 'Egypt', code: 'eg' },
+            { name: 'Nigeria', code: 'ng' },
+            { name: 'Senegal', code: 'sn' },
+            { name: 'Cameroon', code: 'cm' },
+            { name: 'Ghana', code: 'gh' },
+            { name: 'Tunisia', code: 'tn' },
+            { name: 'Algeria', code: 'dz' },
+            { name: 'Uzbekistan', code: 'uz' }
         ];
 
+        function flagUrl(code, size) {
+            return `https://flagcdn.com/${size || 'w80'}/${code}.png`;
+        }
+
+        function getTeam(name) {
+            return TEAMS.find(t => t.name === name);
+        }
+
         const SCORING = {
-            groupWin: 3,
-            draw: 1,
-            ro32: 5,
-            ro16: 10,
-            qf: 15,
-            sf: 20,
-            runnerUp: 20,
-            winner: 50,
-            topScorer: 10
+            groupWin: 3, draw: 1, ro32: 5, ro16: 10,
+            qf: 15, sf: 20, runnerUp: 20, winner: 50, topScorer: 10
+        };
+
+        const STAGE_LABELS = {
+            group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16',
+            qf: 'Quarter-final', sf: 'Semi-final', final: 'Final'
         };
 
         let appState = {
@@ -705,15 +538,34 @@
             matches: [],
             news: [],
             shareCode: null,
+            apiKey: null,
             currentSetupStep: 0,
             selectedTeams: [],
-            setupComplete: false
+            setupComplete: false,
+            previousRanks: {},
+            blobId: null,
+            movementNews: [],
+            lastUpdated: null
         };
 
+        const JSONBLOB_BASE = 'https://jsonblob.com/api/jsonBlob';
+        let IS_VIEWER = false;
+        let VIEW_BLOB_ID = null;
+
+        function detectMode() {
+            const params = new URLSearchParams(window.location.search);
+            VIEW_BLOB_ID = params.get('view');
+            IS_VIEWER = !!VIEW_BLOB_ID;
+        }
+
         function initializeApp() {
+            detectMode();
+            if (IS_VIEWER) {
+                initViewerMode();
+                return;
+            }
             loadFromLocalStorage();
             generateShareCode();
-            
             if (Object.keys(appState.teamAssignments).length === 8) {
                 showScreen('dashboardScreen');
                 updateDashboard();
@@ -722,12 +574,48 @@
             }
         }
 
+        async function initViewerMode() {
+            document.getElementById('masterActions').style.display = 'none';
+            document.getElementById('viewerActions').style.display = 'flex';
+            showScreen('dashboardScreen');
+            document.getElementById('leaderboard').innerHTML = '<p class="info-text">Loading latest standings...</p>';
+            await viewerRefresh();
+        }
+
+        async function viewerRefresh() {
+            const btn = document.getElementById('refreshBtn');
+            if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
+            try {
+                const res = await fetch(`${JSONBLOB_BASE}/${VIEW_BLOB_ID}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!res.ok) throw new Error('Could not load sweepstake data');
+                const data = await res.json();
+                appState = { ...appState, ...data };
+                updateDashboard();
+                renderViewerBanner();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('leaderboard').innerHTML = '<p class="info-text">⚠️ Could not load data. The link may be invalid or no results have been published yet.</p>';
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = '↻ Refresh'; }
+            }
+        }
+
+        function renderViewerBanner() {
+            const banner = document.getElementById('viewerBanner');
+            banner.style.display = 'block';
+            const updated = appState.lastUpdated ? new Date(appState.lastUpdated).toLocaleString() : 'unknown';
+            banner.innerHTML = `You're viewing a shared sweepstake. <strong>Last updated:</strong> ${updated}. Click <strong>↻ Refresh</strong> for the latest standings.`;
+        }
+
         function loadFromLocalStorage() {
             const stored = localStorage.getItem('wc2026_state');
             if (stored) {
-                const loaded = JSON.parse(stored);
-                appState = { ...appState, ...loaded };
+                appState = { ...appState, ...JSON.parse(stored) };
             }
+            const apiKey = localStorage.getItem('wc2026_apiKey');
+            if (apiKey) appState.apiKey = apiKey;
         }
 
         function saveToLocalStorage() {
@@ -737,7 +625,12 @@
                 matches: appState.matches,
                 news: appState.news,
                 shareCode: appState.shareCode,
-                setupComplete: appState.setupComplete
+                setupComplete: appState.setupComplete,
+                previousRanks: appState.previousRanks,
+                blobId: appState.blobId,
+                movementNews: appState.movementNews,
+                topScorerTeam: appState.topScorerTeam || null,
+                lastUpdated: appState.lastUpdated
             }));
         }
 
@@ -746,23 +639,30 @@
                 appState.shareCode = Math.random().toString(36).substr(2, 9).toUpperCase();
                 saveToLocalStorage();
             }
-            document.getElementById('shareCode').value = appState.shareCode;
         }
 
         function startWithDefaults() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (apiKey) {
+                appState.apiKey = apiKey;
+                localStorage.setItem('wc2026_apiKey', apiKey);
+            }
             appState.setupComplete = false;
             appState.selectedTeams = [];
             appState.currentSetupStep = 0;
             appState.teamAssignments = {};
-            appState.participants.forEach(p => {
-                appState.teamAssignments[p] = [];
-            });
+            appState.participants.forEach(p => { appState.teamAssignments[p] = []; });
             saveToLocalStorage();
             showScreen('teamSelectScreen');
             renderTeamSelection();
         }
 
         function startNewSweepstake() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (apiKey) {
+                appState.apiKey = apiKey;
+                localStorage.setItem('wc2026_apiKey', apiKey);
+            }
             appState.selectedTeams = [];
             appState.currentSetupStep = 0;
             showScreen('setupScreen');
@@ -787,18 +687,13 @@
             const names = [];
             for (let i = 0; i < 8; i++) {
                 const name = document.getElementById(`participant${i}`).value.trim();
-                if (!name) {
-                    showToast('Please enter all participant names');
-                    return;
-                }
+                if (!name) { showToast('Please enter all participant names'); return; }
                 names.push(name);
             }
             appState.participants = names;
             appState.teamAssignments = {};
             appState.selectedTeams = [];
-            names.forEach(name => {
-                appState.teamAssignments[name] = [];
-            });
+            names.forEach(name => { appState.teamAssignments[name] = []; });
             appState.currentSetupStep = 0;
             saveToLocalStorage();
             showScreen('teamSelectScreen');
@@ -809,7 +704,6 @@
             const currentParticipant = appState.participants[appState.currentSetupStep];
             document.getElementById('currentParticipant').textContent = `${currentParticipant}'s Teams`;
             document.getElementById('participantName').textContent = currentParticipant;
-            
             appState.selectedTeams = appState.teamAssignments[currentParticipant] || [];
             updateTeamGrid();
         }
@@ -817,31 +711,21 @@
         function updateTeamGrid() {
             const grid = document.getElementById('teamSelectionGrid');
             grid.innerHTML = '';
-            
             TEAMS.forEach(team => {
                 const tile = document.createElement('div');
                 tile.className = 'team-tile';
-                
                 const isSelected = appState.selectedTeams.includes(team.name);
                 const isAssigned = Object.values(appState.teamAssignments).flat().includes(team.name) && !isSelected;
-                
                 if (isSelected) tile.classList.add('selected');
-                if (isAssigned) tile.classList.add('assigned');
-                if (!isSelected && isAssigned) tile.classList.add('unavailable');
-                
+                if (isAssigned) { tile.classList.add('assigned'); tile.classList.add('unavailable'); }
                 tile.innerHTML = `
-                    <div class="team-flag">${team.flag}</div>
+                    <img class="team-flag" src="${flagUrl(team.code)}" alt="${team.name}" loading="lazy" />
                     <div class="team-name">${team.name}</div>
-                    ${isAssigned && !isSelected ? `<div class="team-owner">${getTeamOwner(team.name)}</div>` : ''}
+                    ${isAssigned ? `<div class="team-owner">${getTeamOwner(team.name)}</div>` : ''}
                 `;
-                
-                if (!isAssigned || isSelected) {
-                    tile.onclick = () => toggleTeamSelection(team.name);
-                }
-                
+                if (!isAssigned || isSelected) tile.onclick = () => toggleTeamSelection(team.name);
                 grid.appendChild(tile);
             });
-            
             document.getElementById('picksRemaining').textContent = 6 - appState.selectedTeams.length;
         }
 
@@ -870,11 +754,9 @@
                 showToast('Please select exactly 6 teams');
                 return;
             }
-            
             const currentParticipant = appState.participants[appState.currentSetupStep];
             appState.teamAssignments[currentParticipant] = [...appState.selectedTeams];
             saveToLocalStorage();
-            
             appState.currentSetupStep++;
             if (appState.currentSetupStep < appState.participants.length) {
                 renderTeamSelection();
@@ -897,187 +779,397 @@
             const leaderboard = document.getElementById('leaderboard');
             const scores = calculateScores();
             const sortedScores = Object.entries(scores)
-                .sort((a, b) => b[1] - a[1])
-                .map(([name, score], index) => ({ name, score, rank: index + 1 }));
-            
-            leaderboard.innerHTML = sortedScores.map((entry, index) => `
-                <div class="leaderboard-row">
+                .sort((a, b) => b[1].total - a[1].total)
+                .map(([name, data], index) => ({ name, ...data, rank: index + 1 }));
+
+            leaderboard.innerHTML = sortedScores.map(entry => {
+                const prevRank = appState.previousRanks[entry.name];
+                let movement = '<span class="movement-same">—</span>';
+                if (prevRank !== undefined) {
+                    if (prevRank > entry.rank) movement = '<span class="movement-up">↑ ' + (prevRank - entry.rank) + '</span>';
+                    else if (prevRank < entry.rank) movement = '<span class="movement-down">↓ ' + (entry.rank - prevRank) + '</span>';
+                }
+                const teams = appState.teamAssignments[entry.name] || [];
+                const teamFlags = teams.map(t => {
+                    const team = getTeam(t);
+                    return team ? `<img src="${flagUrl(team.code, 'w40')}" alt="${t}" title="${t}" />` : '';
+                }).join('');
+                const breakdown = teams.map(t => {
+                    const team = getTeam(t);
+                    const pts = entry.breakdown[t] || 0;
+                    return `<div class="breakdown-team">
+                        <img src="${flagUrl(team.code, 'w40')}" alt="${t}" />
+                        <span>${t}</span>
+                        <span class="breakdown-points">${pts} pts</span>
+                    </div>`;
+                }).join('');
+
+                return `
+                <div class="leaderboard-row" onclick="toggleBreakdown('${entry.name}')">
                     <div class="leaderboard-rank">${entry.rank}</div>
-                    <div class="leaderboard-name">${entry.name}</div>
-                    <div class="leaderboard-movement"><span class="movement-up">↑</span></div>
-                    <div class="leaderboard-points">${entry.score}</div>
-                </div>
-            `).join('');
-            
-            const editDiv = document.createElement('div');
-            editDiv.style.marginTop = '2rem';
-            editDiv.innerHTML = '<button class="secondary" onclick="editParticipantNames()" style="width: 100%;">✏️ Edit Participant Names</button>';
-            leaderboard.appendChild(editDiv);
+                    <div class="leaderboard-name-row">
+                        <div class="leaderboard-name">${entry.name}</div>
+                        <div class="leaderboard-teams">${teamFlags}</div>
+                    </div>
+                    <div class="leaderboard-movement">${movement}</div>
+                    <div class="leaderboard-points">${entry.total}</div>
+                    <div class="player-breakdown" id="breakdown-${entry.name}">${breakdown}</div>
+                </div>`;
+            }).join('');
+
+            if (!IS_VIEWER) {
+                const editDiv = document.createElement('div');
+                editDiv.style.marginTop = '2rem';
+                editDiv.innerHTML = '<button class="secondary" onclick="editParticipantNames()" style="width: 100%;">✏️ Edit Participant Names</button>';
+                leaderboard.appendChild(editDiv);
+            }
+        }
+
+        function toggleBreakdown(name) {
+            const el = document.getElementById('breakdown-' + name);
+            if (el) el.classList.toggle('open');
         }
 
         function calculateScores() {
             const scores = {};
-            appState.participants.forEach(p => scores[p] = 0);
-            
+            appState.participants.forEach(p => {
+                scores[p] = { total: 0, breakdown: {} };
+                (appState.teamAssignments[p] || []).forEach(t => { scores[p].breakdown[t] = 0; });
+            });
+
             appState.matches.forEach(match => {
                 for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
-                    if (teams.includes(match.home_team)) {
-                        if (match.home_score > match.away_score) {
-                            scores[owner] += SCORING.groupWin;
-                        } else if (match.home_score === match.away_score) {
-                            scores[owner] += SCORING.draw;
+                    [match.home_team, match.away_team].forEach(teamName => {
+                        if (!teams.includes(teamName)) return;
+                        const isHome = teamName === match.home_team;
+                        const myScore = isHome ? match.home_score : match.away_score;
+                        const oppScore = isHome ? match.away_score : match.home_score;
+                        let pts = 0;
+                        if (match.stage === 'group') {
+                            if (myScore > oppScore) pts = SCORING.groupWin;
+                            else if (myScore === oppScore) pts = SCORING.draw;
+                        } else {
+                            let advanced = myScore > oppScore;
+                            if (myScore === oppScore && match.penalties_winner) {
+                                advanced = match.penalties_winner === teamName;
+                            }
+                            if (advanced) {
+                                if (match.stage === 'ro32') pts = SCORING.ro32;
+                                else if (match.stage === 'ro16') pts = SCORING.ro16;
+                                else if (match.stage === 'qf') pts = SCORING.qf;
+                                else if (match.stage === 'sf') pts = SCORING.sf;
+                                else if (match.stage === 'final') pts = SCORING.winner;
+                            } else if (match.stage === 'final') {
+                                pts = SCORING.runnerUp;
+                            }
                         }
-                    }
-                    if (teams.includes(match.away_team)) {
-                        if (match.away_score > match.home_score) {
-                            scores[owner] += SCORING.groupWin;
-                        } else if (match.home_score === match.away_score) {
-                            scores[owner] += SCORING.draw;
-                        }
-                    }
+                        scores[owner].total += pts;
+                        scores[owner].breakdown[teamName] = (scores[owner].breakdown[teamName] || 0) + pts;
+                    });
                 }
             });
-            
+
+            if (appState.topScorerTeam) {
+                for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
+                    if (teams.includes(appState.topScorerTeam)) {
+                        scores[owner].total += SCORING.topScorer;
+                        scores[owner].breakdown[appState.topScorerTeam] = (scores[owner].breakdown[appState.topScorerTeam] || 0) + SCORING.topScorer;
+                    }
+                }
+            }
+
             return scores;
         }
 
         function renderMatchFeed() {
             const feed = document.getElementById('matchFeed');
             if (appState.matches.length === 0) {
-                feed.innerHTML = '<p class="info-text">🏟️ Tournament begins June 2026. Matches and live scoring will appear here. Click "Sync Latest" to check for updates.</p>';
+                feed.innerHTML = '<p class="info-text">🏟️ Tournament begins June 2026. Click "Sync Latest" to pull live match results.</p>';
                 return;
             }
-            
-            feed.innerHTML = appState.matches.slice(-5).reverse().map(match => `
+            feed.innerHTML = appState.matches.slice(-8).reverse().map(match => {
+                const homeTeam = getTeam(match.home_team);
+                const awayTeam = getTeam(match.away_team);
+                return `
                 <div class="match-item">
                     <div class="match-header">
-                        <div class="match-stage">${match.stage}</div>
+                        <div class="match-stage">${STAGE_LABELS[match.stage] || match.stage}</div>
                     </div>
                     <div class="match-score">
                         <div class="team-matchup">
+                            ${homeTeam ? `<img src="${flagUrl(homeTeam.code)}" alt="${match.home_team}" />` : ''}
                             <div class="team-matchup-name">${match.home_team}</div>
                         </div>
                         <div class="match-result">${match.home_score} <span class="match-vs">vs</span> ${match.away_score}</div>
                         <div class="team-matchup">
+                            ${awayTeam ? `<img src="${flagUrl(awayTeam.code)}" alt="${match.away_team}" />` : ''}
                             <div class="team-matchup-name">${match.away_team}</div>
                         </div>
                     </div>
-                    <div class="match-commentary">"${match.quip}"</div>
-                </div>
-            `).join('');
+                    ${match.quip ? `<div class="match-commentary">"${match.quip}"</div>` : ''}
+                </div>`;
+            }).join('');
         }
 
         function renderNews() {
             const newsCard = document.getElementById('newsCard');
             const newsFeed = document.getElementById('newsFeed');
-            
-            if (appState.news.length === 0) {
-                newsCard.style.display = 'none';
-                return;
-            }
-            
+            const movement = appState.movementNews || [];
+            const news = appState.news || [];
+            if (movement.length === 0 && news.length === 0) { newsCard.style.display = 'none'; return; }
             newsCard.style.display = 'block';
-            newsFeed.innerHTML = appState.news.slice(0, 5).map(item => `
+
+            const movementHtml = movement.slice(0, 4).map(item => `
+                <div class="news-item movement">
+                    <div class="news-headline">${item.headline}</div>
+                    <div class="news-summary">${item.summary}</div>
+                    <div class="news-time">${new Date(item.timestamp).toLocaleString()}</div>
+                </div>
+            `).join('');
+
+            const newsHtml = news.slice(0, 6).map(item => `
                 <div class="news-item">
                     <div class="news-headline">${item.headline}</div>
                     <div class="news-summary">${item.summary}</div>
                     <div class="news-time">${new Date(item.timestamp).toLocaleDateString()}</div>
                 </div>
             `).join('');
+
+            newsFeed.innerHTML = movementHtml + newsHtml;
         }
 
-        async function showAddMatch() {
-            const modal = document.getElementById('settingsModal');
-            const content = modal.querySelector('.modal-content');
-            
-            const teamOptions = TEAMS.map(t => `<option value="${t.name}">${t.name}</option>`).join('');
-            const stageOptions = ['group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
-            const stageSelect = stageOptions.map(s => `<option value="${s}">${s.toUpperCase()}</option>`).join('');
-            
-            content.innerHTML = `
-                <h2 class="modal-title">Add Match Result</h2>
-                
-                <div class="settings-group">
-                    <h3>Home Team</h3>
-                    <select id="homeTeam" style="width: 100%; padding: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(79,195,247,0.2); border-radius: 8px; color: #E8ECED; font-family: 'Manrope', sans-serif;">
-                        <option value="">Select team...</option>
-                        ${teamOptions}
-                    </select>
-                </div>
+        async function syncData() {
+            if (!appState.apiKey) {
+                showToast('❌ Please enter API key in Settings first');
+                return;
+            }
+            const syncBtn = document.getElementById('syncBtn');
+            syncBtn.disabled = true;
+            syncBtn.innerHTML = '<span class="spinner"></span>Syncing...';
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div class="settings-group">
-                        <h3>Home Score</h3>
-                        <input type="number" id="homeScore" min="0" max="10" value="0" style="width: 100%;" />
-                    </div>
-                    <div class="settings-group">
-                        <h3>Away Score</h3>
-                        <input type="number" id="awayScore" min="0" max="10" value="0" style="width: 100%;" />
-                    </div>
-                </div>
+            const ranksBefore = computeRanks();
 
-                <div class="settings-group">
-                    <h3>Away Team</h3>
-                    <select id="awayTeam" style="width: 100%; padding: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(79,195,247,0.2); border-radius: 8px; color: #E8ECED; font-family: 'Manrope', sans-serif;">
-                        <option value="">Select team...</option>
-                        ${teamOptions}
-                    </select>
-                </div>
+            try {
+                const matchData = await fetchMatchUpdates();
+                const newsData = await fetchNews();
 
-                <div class="settings-group">
-                    <h3>Stage</h3>
-                    <select id="stage" style="width: 100%; padding: 0.85rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(79,195,247,0.2); border-radius: 8px; color: #E8ECED; font-family: 'Manrope', sans-serif;">
-                        ${stageSelect}
-                    </select>
-                </div>
+                if (matchData.matches && matchData.matches.length > 0) {
+                    appState.matches = [...appState.matches, ...matchData.matches.filter(m =>
+                        !appState.matches.some(existing => existing.match_id === m.match_id)
+                    )];
+                }
+                if (matchData.top_scorer_team) {
+                    appState.topScorerTeam = matchData.top_scorer_team;
+                }
+                if (newsData.length > 0) {
+                    appState.news = [...newsData, ...appState.news].slice(0, 8);
+                }
 
-                <div class="settings-group">
-                    <h3>Commentary (optional)</h3>
-                    <input type="text" id="quip" placeholder="e.g., 'Amazing comeback'" style="width: 100%;" />
-                </div>
+                const ranksAfter = computeRanks();
+                const moves = detectMovement(ranksBefore, ranksAfter);
+                if (moves.length > 0) {
+                    appState.movementNews = [...moves, ...appState.movementNews].slice(0, 6);
+                    showToast('📈 ' + moves[0].summary);
+                }
 
-                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                    <button onclick="saveMatch()" style="flex: 1;">Add Match</button>
-                    <button class="secondary" onclick="closeSettings()" style="flex: 1;">Cancel</button>
-                </div>
-            `;
-            modal.classList.add('active');
+                const prevPlain = {};
+                Object.keys(ranksBefore).forEach(n => { prevPlain[n] = ranksBefore[n].rank; });
+                appState.previousRanks = prevPlain;
+
+                appState.lastUpdated = new Date().toISOString();
+                saveToLocalStorage();
+                updateDashboard();
+
+                await publishToViewers();
+                showToast('✓ Synced & published to viewers');
+            } catch (error) {
+                console.error('Sync error:', error);
+                showToast('❌ ' + error.message);
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = 'Sync Latest';
+            }
         }
 
-        function saveMatch() {
-            const homeTeam = document.getElementById('homeTeam').value;
-            const awayTeam = document.getElementById('awayTeam').value;
-            const homeScore = parseInt(document.getElementById('homeScore').value);
-            const awayScore = parseInt(document.getElementById('awayScore').value);
-            const stage = document.getElementById('stage').value;
-            const quip = document.getElementById('quip').value || 'Match result recorded';
+        function computeRanks() {
+            const scores = calculateScores();
+            const sorted = Object.entries(scores)
+                .sort((a, b) => b[1].total - a[1].total)
+                .map(([name, data], index) => ({ name, total: data.total, rank: index + 1 }));
+            const ranks = {};
+            sorted.forEach(e => { ranks[e.name] = { rank: e.rank, total: e.total }; });
+            return ranks;
+        }
 
-            if (!homeTeam || !awayTeam) {
-                showToast('Please select both teams');
-                return;
-            }
+        function detectMovement(before, after) {
+            const moves = [];
+            const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
+            Object.keys(after).forEach(name => {
+                const b = before[name];
+                const a = after[name];
+                if (!b) return;
+                if (a.rank < b.rank) {
+                    // moved up - find who they overtook
+                    const overtaken = Object.keys(after).filter(other =>
+                        other !== name && before[other] && before[other].rank < b.rank && after[other].rank > a.rank
+                    );
+                    let summary;
+                    if (overtaken.length === 1) {
+                        summary = `${name} has overtaken ${overtaken[0]} into ${ordinal(a.rank)} place.`;
+                    } else if (overtaken.length > 1) {
+                        summary = `${name} surged past ${overtaken.length} players into ${ordinal(a.rank)} place.`;
+                    } else {
+                        summary = `${name} climbed to ${ordinal(a.rank)} place.`;
+                    }
+                    moves.push({
+                        id: 'mv' + Date.now() + name,
+                        headline: `📈 ${name} climbs to ${ordinal(a.rank)}`,
+                        summary: summary,
+                        timestamp: new Date().toISOString(),
+                        isMovement: true
+                    });
+                }
+            });
+            return moves;
+        }
 
-            if (homeTeam === awayTeam) {
-                showToast('Teams must be different');
-                return;
-            }
-
-            const match = {
-                match_id: 'm' + Date.now(),
-                home_team: homeTeam,
-                away_team: awayTeam,
-                home_score: homeScore,
-                away_score: awayScore,
-                stage: stage,
-                penalties_winner: null,
-                quip: quip
+        async function publishToViewers() {
+            const payload = {
+                participants: appState.participants,
+                teamAssignments: appState.teamAssignments,
+                matches: appState.matches,
+                news: appState.news,
+                movementNews: appState.movementNews,
+                topScorerTeam: appState.topScorerTeam || null,
+                previousRanks: appState.previousRanks,
+                lastUpdated: appState.lastUpdated
             };
 
-            appState.matches.push(match);
+            try {
+                if (!appState.blobId) {
+                    const res = await fetch(JSONBLOB_BASE, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('publish failed');
+                    const location = res.headers.get('Location') || res.headers.get('location');
+                    if (location) {
+                        appState.blobId = location.split('/').pop();
+                        saveToLocalStorage();
+                    }
+                } else {
+                    const res = await fetch(`${JSONBLOB_BASE}/${appState.blobId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('update failed');
+                }
+            } catch (e) {
+                console.error('Publish error:', e);
+                showToast('⚠️ Synced locally, but publishing to viewers failed');
+            }
+        }
+
+        async function manualPublish() {
+            appState.lastUpdated = new Date().toISOString();
             saveToLocalStorage();
-            updateDashboard();
-            closeSettings();
-            showToast('✓ Match added to results');
+            await publishToViewers();
+            if (appState.blobId) {
+                showToast('✓ Published! Viewer link ready in Settings');
+                showSettings();
+            }
+        }
+
+        async function fetchMatchUpdates() {
+            const teamList = TEAMS.map(t => t.name).join(', ');
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': appState.apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-6',
+                    max_tokens: 1500,
+                    system: 'You provide World Cup 2026 match data. Use web search to find real results if available. Return ONLY valid JSON, no markdown, no extra text.',
+                    messages: [{
+                        role: 'user',
+                        content: `Find the latest real World Cup 2026 match results. Only use these team names: ${teamList}. Return ONLY this JSON:
+{
+  "matches": [
+    {
+      "match_id": "unique_id",
+      "home_team": "Team",
+      "away_team": "Team",
+      "home_score": 0,
+      "away_score": 0,
+      "stage": "group",
+      "penalties_winner": null,
+      "quip": "One-line commentary"
+    }
+  ],
+  "top_scorer_team": null
+}`
+                    }],
+                    tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.text();
+                throw new Error(`API ${response.status}: ${err.slice(0, 100)}`);
+            }
+
+            const data = await response.json();
+            const textBlock = data.content.find(c => c.type === 'text');
+            if (!textBlock) return { matches: [] };
+            const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) return { matches: [] };
+            return JSON.parse(jsonMatch[0]);
+        }
+
+        async function fetchNews() {
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': appState.apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-6',
+                        max_tokens: 1000,
+                        system: 'You provide real World Cup 2026 news. Use web search. Return ONLY valid JSON, no markdown.',
+                        messages: [{
+                            role: 'user',
+                            content: `Find 3 latest real World Cup 2026 news items (squad announcements, injuries, predictions, headlines). Return ONLY this JSON:
+{
+  "news": [
+    { "id": "unique_id", "headline": "Headline", "summary": "One sentence", "timestamp": "${new Date().toISOString()}" }
+  ]
+}`
+                        }],
+                        tools: [{ type: 'web_search_20250305', name: 'web_search' }]
+                    })
+                });
+
+                if (!response.ok) return [];
+                const data = await response.json();
+                const textBlock = data.content.find(c => c.type === 'text');
+                if (!textBlock) return [];
+                const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) return [];
+                return JSON.parse(jsonMatch[0]).news || [];
+            } catch (error) {
+                console.error('News error:', error);
+                return [];
+            }
         }
 
         function editParticipantNames() {
@@ -1092,18 +1184,13 @@
                     <button class="secondary" onclick="closeSettings()" style="flex: 1;">Cancel</button>
                 </div>
             `;
-            
             const inputs = document.getElementById('editParticipantInputs');
             appState.participants.forEach((name, i) => {
                 const group = document.createElement('div');
                 group.className = 'participant-input-group';
-                group.innerHTML = `
-                    <label>Participant ${i + 1}</label>
-                    <input type="text" id="editParticipant${i}" value="${name}" />
-                `;
+                group.innerHTML = `<label>Participant ${i + 1}</label><input type="text" id="editParticipant${i}" value="${name}" />`;
                 inputs.appendChild(group);
             });
-            
             modal.classList.add('active');
         }
 
@@ -1111,25 +1198,22 @@
             const newNames = [];
             for (let i = 0; i < 8; i++) {
                 const name = document.getElementById(`editParticipant${i}`).value.trim();
-                if (!name) {
-                    showToast('Please enter all names');
-                    return;
-                }
+                if (!name) { showToast('Please enter all names'); return; }
                 newNames.push(name);
             }
-            
             const oldToNew = {};
-            appState.participants.forEach((oldName, i) => {
-                oldToNew[oldName] = newNames[i];
-            });
-            
+            appState.participants.forEach((oldName, i) => { oldToNew[oldName] = newNames[i]; });
             const newAssignments = {};
             Object.entries(appState.teamAssignments).forEach(([oldName, teams]) => {
                 newAssignments[oldToNew[oldName]] = teams;
             });
-            
+            const newPrevRanks = {};
+            Object.entries(appState.previousRanks).forEach(([oldName, rank]) => {
+                if (oldToNew[oldName]) newPrevRanks[oldToNew[oldName]] = rank;
+            });
             appState.participants = newNames;
             appState.teamAssignments = newAssignments;
+            appState.previousRanks = newPrevRanks;
             saveToLocalStorage();
             updateDashboard();
             closeSettings();
@@ -1138,31 +1222,60 @@
 
         function showSettings() {
             const modal = document.getElementById('settingsModal');
+            const viewerLink = appState.blobId
+                ? `${window.location.origin}${window.location.pathname}?view=${appState.blobId}`
+                : null;
+            const viewerSection = viewerLink
+                ? `<div class="participant-input-group">
+                        <label>Viewer Link (send this to colleagues)</label>
+                        <input type="text" value="${viewerLink}" readonly id="viewerLinkInput" />
+                   </div>
+                   <button class="secondary" onclick="copyViewerLink()" style="width: 100%;">Copy Viewer Link</button>`
+                : `<p class="info-text">No viewer link yet. Click "Sync Latest" or "Publish Now" to create one, then share it with colleagues.</p>
+                   <button onclick="manualPublish()" style="width: 100%; margin-top: 0.5rem;">📤 Publish Now</button>`;
+
             modal.querySelector('.modal-content').innerHTML = `
                 <h2 class="modal-title">Settings</h2>
-                
                 <div class="settings-group">
-                    <h3>Shared Data</h3>
+                    <h3>API Configuration</h3>
                     <div class="participant-input-group">
-                        <label>Share Code</label>
-                        <input type="text" id="shareCode" value="${appState.shareCode}" readonly />
+                        <label for="settingsApiKey">Anthropic API Key</label>
+                        <input type="password" id="settingsApiKey" value="${appState.apiKey || ''}" />
                     </div>
-                    <button class="secondary" onclick="copyShareCode()" style="width: 100%;">Copy Share Code</button>
-                    <p class="info-text" style="margin-top: 1rem;">Share this code with others. They can load the same sweepstake.</p>
+                    <button onclick="saveApiKey()" style="width: 100%; margin-top: 1rem;">Save API Key</button>
                 </div>
-
+                <div class="settings-group">
+                    <h3>Share with Viewers</h3>
+                    ${viewerSection}
+                    ${viewerLink ? '<button onclick="manualPublish()" style="width: 100%; margin-top: 0.75rem;">📤 Re-publish Latest</button>' : ''}
+                </div>
                 <div class="settings-group">
                     <h3>Data Management</h3>
                     <button class="secondary" onclick="resetSweepstake()" style="width: 100%;">Reset Sweepstake</button>
                 </div>
-
                 <button onclick="closeSettings()" style="width: 100%; margin-top: 2rem;">Close</button>
             `;
             modal.classList.add('active');
         }
 
+        function copyViewerLink() {
+            const input = document.getElementById('viewerLinkInput');
+            navigator.clipboard.writeText(input.value);
+            showToast('✓ Viewer link copied');
+        }
+
         function closeSettings() {
             document.getElementById('settingsModal').classList.remove('active');
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('settingsApiKey').value.trim();
+            if (key) {
+                appState.apiKey = key;
+                localStorage.setItem('wc2026_apiKey', key);
+                showToast('✓ API key saved');
+                closeSettings();
+            }
         }
 
         function copyShareCode() {
@@ -1172,7 +1285,7 @@
 
         function resetSweepstake() {
             if (confirm('Reset all data? This cannot be undone.')) {
-                localStorage.clear();
+                localStorage.removeItem('wc2026_state');
                 location.reload();
             }
         }
