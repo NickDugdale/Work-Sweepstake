@@ -55,6 +55,14 @@
         .breakdown-team { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; font-size: 0.9rem; }
         .breakdown-team img { width: 28px; height: 18px; object-fit: cover; border-radius: 3px; }
         .breakdown-points { margin-left: auto; color: #4FC3F7; font-weight: 600; }
+        .bt-tier { color: #9FC5DC; font-size: 0.78rem; margin-left: 0.5rem; }
+        .overview-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.5rem; margin-bottom: 1rem; }
+        .ov-stat { display: flex; flex-direction: column; gap: 0.25rem; }
+        .ov-stat .ov-label { font-size: 0.72rem; color: #7DB8D8; text-transform: uppercase; letter-spacing: 0.04em; }
+        .ov-stat .ov-value { font-size: 0.95rem; color: #E8ECED; font-weight: 600; display: flex; align-items: center; }
+        .ov-flag { width: 22px; height: 15px; object-fit: cover; border-radius: 2px; vertical-align: middle; margin-right: 5px; }
+        .ov-teams-label { font-size: 0.72rem; color: #7DB8D8; text-transform: uppercase; letter-spacing: 0.04em; margin: 0.75rem 0 0.25rem; }
+        @media (max-width: 600px) { .overview-summary { grid-template-columns: 1fr; } }
         .match-item { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(79, 195, 247, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
         .match-item.friendly { border-style: dashed; border-color: rgba(125, 184, 216, 0.25); }
         .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
@@ -215,8 +223,98 @@
         function flagUrl(code, size) { return `https://flagcdn.com/${size || 'w80'}/${code}.png`; }
         function getTeam(name) { return TEAMS.find(t => t.name === name); }
 
+        // Broad country-name -> flagcdn code map so ANY team (incl. opponents in
+        // friendlies/fixtures, not just the 48 pool teams) renders a flag.
+        const FLAG_ALIASES = {
+            'usa':'us','united states':'us','united states of america':'us','us':'us','usmnt':'us',
+            'mexico':'mx','canada':'ca',
+            'england':'gb-eng','scotland':'gb-sct','wales':'gb-wls','northern ireland':'gb-nir',
+            'great britain':'gb','united kingdom':'gb',
+            'france':'fr','germany':'de','spain':'es','italy':'it','netherlands':'nl','holland':'nl',
+            'portugal':'pt','belgium':'be','switzerland':'ch','austria':'at',
+            'czechia':'cz','czech republic':'cz','poland':'pl','ukraine':'ua','serbia':'rs',
+            'croatia':'hr','denmark':'dk','sweden':'se','norway':'no','finland':'fi','iceland':'is',
+            'argentina':'ar','brazil':'br','uruguay':'uy','colombia':'co','chile':'cl','ecuador':'ec',
+            'peru':'pe','paraguay':'py','venezuela':'ve','bolivia':'bo',
+            'costa rica':'cr','panama':'pa','honduras':'hn','jamaica':'jm','el salvador':'sv',
+            'guatemala':'gt','trinidad and tobago':'tt','haiti':'ht','curacao':'cw','suriname':'sr',
+            'japan':'jp','south korea':'kr','korea republic':'kr','korea':'kr','north korea':'kp',
+            'iran':'ir','ir iran':'ir','saudi arabia':'sa','australia':'au','new zealand':'nz',
+            'qatar':'qa','iraq':'iq','united arab emirates':'ae','uae':'ae','jordan':'jo','oman':'om',
+            'bahrain':'bh','kuwait':'kw','palestine':'ps','syria':'sy','lebanon':'lb','yemen':'ye',
+            'china':'cn','china pr':'cn','india':'in','indonesia':'id','vietnam':'vn','thailand':'th',
+            'malaysia':'my','philippines':'ph','uzbekistan':'uz','iraq republic':'iq',
+            'morocco':'ma','egypt':'eg','nigeria':'ng','senegal':'sn','cameroon':'cm','ghana':'gh',
+            'tunisia':'tn','algeria':'dz','south africa':'za','ivory coast':'ci','cote divoire':'ci',
+            'mali':'ml','burkina faso':'bf','guinea':'gn','dr congo':'cd','congo':'cg','gabon':'ga',
+            'zambia':'zm','kenya':'ke','angola':'ao','mozambique':'mz','cape verde':'cv',
+            'equatorial guinea':'gq','benin':'bj','togo':'tg','madagascar':'mg','mauritania':'mr',
+            'libya':'ly','sudan':'sd','tanzania':'tz','uganda':'ug','zimbabwe':'zw','namibia':'na',
+            'gambia':'gm','sierra leone':'sl','niger':'ne',
+            'turkey':'tr','turkiye':'tr','greece':'gr','russia':'ru','hungary':'hu','romania':'ro',
+            'slovakia':'sk','slovenia':'si','bulgaria':'bg','republic of ireland':'ie','ireland':'ie',
+            'albania':'al','north macedonia':'mk','macedonia':'mk','montenegro':'me','kosovo':'xk',
+            'georgia':'ge','armenia':'am','azerbaijan':'az','israel':'il','bosnia and herzegovina':'ba',
+            'bosnia':'ba','luxembourg':'lu','cyprus':'cy','estonia':'ee','latvia':'lv','lithuania':'lt'
+        };
+        function normName(n) {
+            return (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+        }
+        function flagCodeFor(name) {
+            const t = getTeam(name);
+            if (t) return t.code;
+            const code = FLAG_ALIASES[normName(name)];
+            return code || null;
+        }
+        function flagImg(name, sizeClass, size) {
+            const code = flagCodeFor(name);
+            if (!code) return '';
+            return `<img${sizeClass ? ' class="' + sizeClass + '"' : ''} src="${flagUrl(code, size)}" alt="${name}" title="${name}" />`;
+        }
+
         const SCORING = { groupWin: 3, draw: 1, ro32: 5, ro16: 10, qf: 15, sf: 20, runnerUp: 20, winner: 50, topScorer: 10 };
         const STAGE_LABELS = { group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-final', sf: 'Semi-final', final: 'Final' };
+
+        // Rough pre-tournament title odds, strongest first. Used for the "best title chance" overview.
+        const FAVOURITE_ORDER = [
+            'France','Spain','Argentina','England','Brazil','Germany','Portugal',
+            'Netherlands','Italy','Belgium','Uruguay','Croatia','Morocco',
+            'USA','Mexico','Colombia','Japan','Switzerland','Denmark','Senegal','Serbia','Austria','Ecuador'
+        ];
+        function titleChance(teamName) {
+            const i = FAVOURITE_ORDER.indexOf(teamName);
+            if (i === -1) return { rank: 999, label: 'Outsider' };
+            if (i < 7) return { rank: i, label: 'Favourite' };
+            if (i < 13) return { rank: i, label: 'Contender' };
+            return { rank: i, label: 'Dark horse' };
+        }
+
+        function buildOverview(entry, teams) {
+            let topTeam = null, topPts = -1;
+            teams.forEach(t => { const p = entry.breakdown[t] || 0; if (p > topPts) { topPts = p; topTeam = t; } });
+            let bestTeam = null, bestRank = 99999, bestLabel = '';
+            teams.forEach(t => { const tc = titleChance(t); if (tc.rank < bestRank) { bestRank = tc.rank; bestTeam = t; bestLabel = tc.label; } });
+            const topPerformerHtml = topPts > 0
+                ? `${flagImg(topTeam, 'ov-flag', 'w40')}${topTeam} · ${topPts} pts`
+                : 'No points yet';
+            const bestChanceHtml = bestTeam
+                ? `${flagImg(bestTeam, 'ov-flag', 'w40')}${bestTeam} (${bestLabel})`
+                : '—';
+            const teamRows = teams.map(t => {
+                const tc = titleChance(t);
+                const pts = entry.breakdown[t] || 0;
+                return `<div class="breakdown-team">${flagImg(t, '', 'w40')}<span>${t}<span class="bt-tier">${tc.label}</span></span><span class="breakdown-points">${pts} pts</span></div>`;
+            }).join('');
+            return `
+                <div class="overview-summary">
+                    <div class="ov-stat"><span class="ov-label">Total points</span><span class="ov-value">${entry.total}</span></div>
+                    <div class="ov-stat"><span class="ov-label">Position</span><span class="ov-value">#${entry.rank} of ${appState.participants.length}</span></div>
+                    <div class="ov-stat"><span class="ov-label">Top performer</span><span class="ov-value">${topPerformerHtml}</span></div>
+                    <div class="ov-stat"><span class="ov-label">Best title chance</span><span class="ov-value">${bestChanceHtml}</span></div>
+                </div>
+                <div class="ov-teams-label">All teams</div>
+                ${teamRows}`;
+        }
 
         const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
 
@@ -475,13 +573,13 @@
                 }
                 const teams = appState.teamAssignments[entry.name] || [];
                 const teamFlags = teams.map(t => { const tm = getTeam(t); return tm ? `<img src="${flagUrl(tm.code, 'w40')}" alt="${t}" title="${t}" />` : ''; }).join('');
-                const breakdown = teams.map(t => { const tm = getTeam(t); const pts = entry.breakdown[t] || 0; return `<div class="breakdown-team"><img src="${flagUrl(tm.code, 'w40')}" alt="${t}" /><span>${t}</span><span class="breakdown-points">${pts} pts</span></div>`; }).join('');
+                const overview = buildOverview(entry, teams);
                 return `<div class="leaderboard-row" onclick="toggleBreakdown('${entry.name}')">
                     <div class="leaderboard-rank">${entry.rank}</div>
                     <div class="leaderboard-name-row"><div class="leaderboard-name">${entry.name}</div><div class="leaderboard-teams">${teamFlags}</div></div>
                     <div class="leaderboard-movement">${movement}</div>
                     <div class="leaderboard-points">${entry.total}</div>
-                    <div class="player-breakdown" id="breakdown-${entry.name}">${breakdown}</div>
+                    <div class="player-breakdown" id="breakdown-${entry.name}">${overview}</div>
                 </div>`;
             }).join('');
             if (!IS_VIEWER) {
@@ -543,8 +641,6 @@
 
         function matchCardHtml(match, opts) {
             opts = opts || {};
-            const homeTeam = getTeam(match.home_team);
-            const awayTeam = getTeam(match.away_team);
             const stageLabel = opts.warmup ? 'Warm-up Friendly' : (STAGE_LABELS[match.stage] || match.stage || 'Match');
             const stageClass = opts.warmup ? 'match-stage warmup' : 'match-stage';
             const scoreOrVs = opts.upcoming
@@ -554,9 +650,9 @@
             return `<div class="match-item${opts.warmup ? ' friendly' : ''}">
                 <div class="match-header"><div class="${stageClass}">${stageLabel}</div>${kickoff}</div>
                 <div class="match-score">
-                    <div class="team-matchup">${homeTeam ? `<img src="${flagUrl(homeTeam.code)}" alt="${match.home_team}" />` : ''}<div class="team-matchup-name">${match.home_team}</div></div>
+                    <div class="team-matchup">${flagImg(match.home_team)}<div class="team-matchup-name">${match.home_team}</div></div>
                     ${scoreOrVs}
-                    <div class="team-matchup">${awayTeam ? `<img src="${flagUrl(awayTeam.code)}" alt="${match.away_team}" />` : ''}<div class="team-matchup-name">${match.away_team}</div></div>
+                    <div class="team-matchup">${flagImg(match.away_team)}<div class="team-matchup-name">${match.away_team}</div></div>
                 </div>
                 ${match.quip ? `<div class="match-commentary">"${match.quip}"</div>` : ''}
                 ${opts.warmup ? '<div class="match-note">Friendly — does not count toward sweepstake points</div>' : ''}
