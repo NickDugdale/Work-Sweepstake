@@ -7,253 +7,60 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        html, body {
-            font-family: 'Manrope', sans-serif;
-            background: #0B1F33;
-            color: #E8ECED;
-            height: 100%;
-            overflow: hidden;
-        }
-
+        html, body { font-family: 'Manrope', sans-serif; background: #0B1F33; color: #E8ECED; height: 100%; overflow: hidden; }
         body { display: flex; flex-direction: column; }
-
         .app-container { flex: 1; display: flex; overflow: hidden; }
-
-        header {
-            background: linear-gradient(135deg, #0B1F33 0%, #0D2847 100%);
-            border-bottom: 1px solid rgba(79, 195, 247, 0.15);
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        h1 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 600;
-            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
+        header { background: linear-gradient(135deg, #0B1F33 0%, #0D2847 100%); border-bottom: 1px solid rgba(79, 195, 247, 0.15); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        h1 { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 600; background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .header-actions { display: flex; gap: 1rem; align-items: center; }
-
-        button {
-            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
-            color: #0B1F33;
-            border: none;
-            padding: 0.65rem 1.5rem;
-            border-radius: 12px;
-            font-family: 'Manrope', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
-
+        button { background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%); color: #0B1F33; border: none; padding: 0.65rem 1.5rem; border-radius: 12px; font-family: 'Manrope', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.95rem; }
         button:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(79, 195, 247, 0.25); }
         button:active { transform: translateY(0); }
         button:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        button.secondary {
-            background: rgba(79, 195, 247, 0.1);
-            color: #4FC3F7;
-            border: 1px solid rgba(79, 195, 247, 0.3);
-        }
-
+        button.secondary { background: rgba(79, 195, 247, 0.1); color: #4FC3F7; border: 1px solid rgba(79, 195, 247, 0.3); }
         button.secondary:hover { background: rgba(79, 195, 247, 0.15); }
-
         .screen { display: none; flex: 1; overflow-y: auto; padding: 2rem; }
         .screen.active { display: flex; flex-direction: column; }
         .screen-content { max-width: 1400px; width: 100%; margin: 0 auto; }
-
-        .card {
-            background: linear-gradient(135deg, rgba(13, 40, 71, 0.8) 0%, rgba(20, 50, 80, 0.6) 100%);
-            border: 1px solid rgba(79, 195, 247, 0.15);
-            border-radius: 16px;
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-            backdrop-filter: blur(10px);
-        }
-
-        .card h2 {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
-            color: #4FC3F7;
-        }
-
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .team-tile {
-            background: rgba(79, 195, 247, 0.05);
-            border: 2px solid rgba(79, 195, 247, 0.2);
-            padding: 1rem;
-            border-radius: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .team-tile:hover:not(.unavailable):not(.assigned) {
-            background: rgba(79, 195, 247, 0.15);
-            border-color: rgba(79, 195, 247, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .team-tile.selected {
-            background: linear-gradient(135deg, rgba(79, 195, 247, 0.3) 0%, rgba(41, 182, 246, 0.3) 100%);
-            border-color: #4FC3F7;
-            box-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
-        }
-
-        .team-tile.assigned {
-            background: rgba(79, 195, 247, 0.08);
-            border-color: rgba(79, 195, 247, 0.15);
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
+        .card { background: linear-gradient(135deg, rgba(13, 40, 71, 0.8) 0%, rgba(20, 50, 80, 0.6) 100%); border: 1px solid rgba(79, 195, 247, 0.15); border-radius: 16px; padding: 2rem; margin-bottom: 1.5rem; backdrop-filter: blur(10px); }
+        .card h2 { font-family: 'Outfit', sans-serif; font-size: 1.25rem; margin-bottom: 1.5rem; color: #4FC3F7; }
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; margin-top: 1rem; }
+        .team-tile { background: rgba(79, 195, 247, 0.05); border: 2px solid rgba(79, 195, 247, 0.2); padding: 1rem; border-radius: 12px; text-align: center; cursor: pointer; transition: all 0.3s ease; position: relative; }
+        .team-tile:hover:not(.unavailable):not(.assigned) { background: rgba(79, 195, 247, 0.15); border-color: rgba(79, 195, 247, 0.4); transform: translateY(-2px); }
+        .team-tile.selected { background: linear-gradient(135deg, rgba(79, 195, 247, 0.3) 0%, rgba(41, 182, 246, 0.3) 100%); border-color: #4FC3F7; box-shadow: 0 0 20px rgba(79, 195, 247, 0.3); }
+        .team-tile.assigned { background: rgba(79, 195, 247, 0.08); border-color: rgba(79, 195, 247, 0.15); opacity: 0.5; cursor: not-allowed; }
         .team-tile.unavailable { opacity: 0.3; cursor: not-allowed; }
-
-        .team-flag {
-            width: 48px;
-            height: 32px;
-            object-fit: cover;
-            border-radius: 4px;
-            margin: 0 auto 0.5rem;
-            display: block;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-        }
-
+        .team-flag { width: 48px; height: 32px; object-fit: cover; border-radius: 4px; margin: 0 auto 0.5rem; display: block; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
         .team-name { font-size: 0.85rem; font-weight: 600; color: #E8ECED; }
         .team-owner { font-size: 0.75rem; color: #7DB8D8; margin-top: 0.25rem; }
-
         .participant-input-group { margin-bottom: 1.5rem; }
-
-        .participant-input-group label {
-            display: block;
-            font-size: 0.95rem;
-            margin-bottom: 0.5rem;
-            color: #7DB8D8;
-        }
-
-        input[type="text"], input[type="password"], input[type="number"], select {
-            width: 100%;
-            padding: 0.85rem;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(79, 195, 247, 0.2);
-            border-radius: 8px;
-            color: #E8ECED;
-            font-family: 'Manrope', sans-serif;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            background: rgba(0, 0, 0, 0.5);
-            border-color: #4FC3F7;
-            box-shadow: 0 0 15px rgba(79, 195, 247, 0.2);
-        }
-
+        .participant-input-group label { display: block; font-size: 0.95rem; margin-bottom: 0.5rem; color: #7DB8D8; }
+        input[type="text"], input[type="password"], input[type="number"], select { width: 100%; padding: 0.85rem; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(79, 195, 247, 0.2); border-radius: 8px; color: #E8ECED; font-family: 'Manrope', sans-serif; font-size: 0.95rem; transition: all 0.3s ease; }
+        input:focus, select:focus { outline: none; background: rgba(0, 0, 0, 0.5); border-color: #4FC3F7; box-shadow: 0 0 15px rgba(79, 195, 247, 0.2); }
         .leaderboard { margin-top: 1.5rem; }
-
-        .leaderboard-row {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(79, 195, 247, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            display: grid;
-            grid-template-columns: 50px 1fr 120px 80px;
-            gap: 1.5rem;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
+        .leaderboard-row { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(79, 195, 247, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; display: grid; grid-template-columns: 50px 1fr 120px 80px; gap: 1.5rem; align-items: center; cursor: pointer; transition: all 0.3s ease; }
         .leaderboard-row:hover { background: rgba(79, 195, 247, 0.08); transform: translateX(4px); }
-
-        .leaderboard-rank {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-align: center;
-        }
-
+        .leaderboard-rank { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; }
         .leaderboard-name { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; }
         .leaderboard-name-row { display: flex; flex-direction: column; gap: 0.5rem; }
         .leaderboard-teams { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .leaderboard-teams img { width: 24px; height: 16px; object-fit: cover; border-radius: 2px; }
-
         .leaderboard-movement { font-size: 0.9rem; text-align: center; }
         .movement-up { color: #4CAF50; }
         .movement-down { color: #FF6B6B; }
         .movement-same { color: #7DB8D8; }
-
-        .leaderboard-points {
-            font-family: 'Outfit', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #4FC3F7;
-            text-align: right;
-        }
-
-        .player-breakdown {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid rgba(79, 195, 247, 0.1);
-            display: none;
-            grid-column: 1 / -1;
-        }
-
+        .leaderboard-points { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: #4FC3F7; text-align: right; }
+        .player-breakdown { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(79, 195, 247, 0.1); display: none; grid-column: 1 / -1; }
         .player-breakdown.open { display: block; }
-
-        .breakdown-team {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 0;
-            font-size: 0.9rem;
-        }
-
+        .breakdown-team { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; font-size: 0.9rem; }
         .breakdown-team img { width: 28px; height: 18px; object-fit: cover; border-radius: 3px; }
         .breakdown-points { margin-left: auto; color: #4FC3F7; font-weight: 600; }
-
-        .match-item {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(79, 195, 247, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
+        .match-item { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(79, 195, 247, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+        .match-item.friendly { border-style: dashed; border-color: rgba(125, 184, 216, 0.25); }
         .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-
-        .match-stage {
-            font-size: 0.75rem;
-            background: rgba(79, 195, 247, 0.2);
-            color: #4FC3F7;
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
+        .match-stage { font-size: 0.75rem; background: rgba(79, 195, 247, 0.2); color: #4FC3F7; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 600; text-transform: uppercase; }
+        .match-stage.warmup { background: rgba(125, 184, 216, 0.15); color: #9FC5DC; }
+        .match-kickoff { font-size: 0.78rem; color: #7DB8D8; }
         .match-score { display: flex; gap: 1rem; align-items: center; justify-content: center; }
         .team-matchup { text-align: center; flex: 1; }
         .team-matchup img { width: 40px; height: 27px; object-fit: cover; border-radius: 3px; margin-bottom: 0.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
@@ -261,100 +68,32 @@
         .match-result { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: #4FC3F7; }
         .match-vs { color: #7DB8D8; font-size: 0.85rem; padding: 0 0.5rem; }
         .match-commentary { font-size: 0.9rem; color: #7DB8D8; margin-top: 0.75rem; font-style: italic; text-align: center; }
-
+        .match-note { font-size: 0.75rem; color: #9FC5DC; margin-top: 0.5rem; text-align: center; }
         .news-item { padding: 1rem; border-bottom: 1px solid rgba(79, 195, 247, 0.1); margin-bottom: 1rem; }
         .news-item:last-child { border-bottom: none; margin-bottom: 0; }
         .news-headline { font-weight: 600; color: #4FC3F7; margin-bottom: 0.5rem; }
         .news-summary { font-size: 0.9rem; color: #7DB8D8; line-height: 1.5; }
         .news-time { font-size: 0.75rem; color: #556C7D; margin-top: 0.5rem; }
-
-        .news-item.movement {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(79, 195, 247, 0.08) 100%);
-            border: 1px solid rgba(76, 175, 80, 0.3);
-            border-radius: 10px;
-            padding: 1rem 1.25rem;
-            animation: slideIn 0.4s ease;
-        }
+        .news-item.movement { background: linear-gradient(135deg, rgba(76, 175, 80, 0.12) 0%, rgba(79, 195, 247, 0.08) 100%); border: 1px solid rgba(76, 175, 80, 0.3); border-radius: 10px; padding: 1rem 1.25rem; animation: slideIn 0.4s ease; }
         .news-item.movement .news-headline { color: #6FD98C; }
-
-        .viewer-banner {
-            background: rgba(79, 195, 247, 0.1);
-            border: 1px solid rgba(79, 195, 247, 0.25);
-            border-radius: 12px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            color: #7DB8D8;
-        }
+        .viewer-banner { background: rgba(79, 195, 247, 0.1); border: 1px solid rgba(79, 195, 247, 0.25); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #7DB8D8; }
         .viewer-banner strong { color: #4FC3F7; }
-
+        .empty-note { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
         .settings-group { margin-bottom: 2rem; }
         .settings-group h3 { font-family: 'Outfit', sans-serif; font-size: 1rem; margin-bottom: 1rem; color: #4FC3F7; }
-
         .info-text { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
-
+        .help-link { color: #4FC3F7; text-decoration: underline; }
         .setup-progress { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
         .progress-step { flex: 1; height: 4px; background: rgba(79, 195, 247, 0.1); border-radius: 2px; overflow: hidden; }
         .progress-step.active { background: linear-gradient(90deg, #4FC3F7 0%, #29B6F6 100%); }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 1000; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
-
-        .modal-content {
-            background: linear-gradient(135deg, #0D2847 0%, #0B1F33 100%);
-            border: 1px solid rgba(79, 195, 247, 0.3);
-            border-radius: 16px;
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
+        .modal-content { background: linear-gradient(135deg, #0D2847 0%, #0B1F33 100%); border: 1px solid rgba(79, 195, 247, 0.3); border-radius: 16px; padding: 2rem; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
         .modal-title { font-family: 'Outfit', sans-serif; font-size: 1.3rem; margin-bottom: 1.5rem; color: #4FC3F7; }
-
-        .toast {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%);
-            color: #0B1F33;
-            padding: 1rem 1.5rem;
-            border-radius: 8px;
-            font-weight: 600;
-            animation: slideIn 0.3s ease;
-            z-index: 2000;
-            max-width: 320px;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(400px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
+        .toast { position: fixed; bottom: 2rem; right: 2rem; background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%); color: #0B1F33; padding: 1rem 1.5rem; border-radius: 8px; font-weight: 600; animation: slideIn 0.3s ease; z-index: 2000; max-width: 340px; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .spinner {
-            display: inline-block;
-            border: 2px solid rgba(11, 31, 51, 0.3);
-            border-top: 2px solid #0B1F33;
-            border-radius: 50%;
-            width: 14px;
-            height: 14px;
-            animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
-            vertical-align: middle;
-        }
-
+        .spinner { display: inline-block; border: 2px solid rgba(11, 31, 51, 0.3); border-top: 2px solid #0B1F33; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; margin-right: 0.5rem; vertical-align: middle; }
         @media (max-width: 768px) {
             header { padding: 1rem; flex-wrap: wrap; gap: 1rem; }
             h1 { font-size: 1.2rem; }
@@ -386,18 +125,14 @@
             <div class="screen-content">
                 <div class="card">
                     <h2>Welcome to the World Cup Sweepstake</h2>
-                    <p class="info-text" style="margin-bottom: 2rem;">Manage your office sweepstake with live match updates and World Cup news, powered by the Claude API.</p>
-
+                    <p class="info-text" style="margin-bottom: 2rem;">Live match results and World Cup news, powered by the Claude API. You manage the sweepstake; colleagues get a read-only viewer link.</p>
                     <div class="settings-group">
-                        <h3>API Key Setup</h3>
-                        <p class="info-text" style="margin-bottom: 1rem;">Enter your Anthropic API key to enable "Sync Latest" for live match results and news. You can add this later in Settings.</p>
+                        <h3>Anthropic API Key (for live data)</h3>
                         <div class="participant-input-group">
-                            <label for="apiKey">Anthropic API Key</label>
-                            <input type="password" id="apiKey" placeholder="sk-ant-... (optional)" />
+                            <input type="password" id="apiKey" placeholder="sk-ant-... (optional, add later in Settings)" />
                         </div>
                     </div>
-
-                    <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                         <button style="flex: 1; min-width: 150px;" onclick="startWithDefaults()">✅ Quick Start (Default Names)</button>
                         <button class="secondary" style="flex: 1; min-width: 150px;" onclick="startNewSweepstake()">✏️ Customize Names First</button>
                     </div>
@@ -407,11 +142,7 @@
 
         <div class="screen" id="setupScreen">
             <div class="screen-content">
-                <div class="setup-progress">
-                    <div class="progress-step active"></div>
-                    <div class="progress-step"></div>
-                    <div class="progress-step"></div>
-                </div>
+                <div class="setup-progress"><div class="progress-step active"></div><div class="progress-step"></div><div class="progress-step"></div></div>
                 <div class="card">
                     <h2>Customize Participant Names</h2>
                     <p class="info-text" style="margin-bottom: 1.5rem;">Edit the participant names. You can change these anytime later.</p>
@@ -423,16 +154,10 @@
 
         <div class="screen" id="teamSelectScreen">
             <div class="screen-content">
-                <div class="setup-progress">
-                    <div class="progress-step active"></div>
-                    <div class="progress-step active"></div>
-                    <div class="progress-step"></div>
-                </div>
+                <div class="setup-progress"><div class="progress-step active"></div><div class="progress-step active"></div><div class="progress-step"></div></div>
                 <div class="card">
                     <h2 id="currentParticipant">Participant Selection</h2>
-                    <p class="info-text" style="margin-bottom: 1rem;">
-                        Picks remaining: <strong id="picksRemaining">6</strong> for <strong id="participantName">Team</strong>
-                    </p>
+                    <p class="info-text" style="margin-bottom: 1rem;">Picks remaining: <strong id="picksRemaining">6</strong> for <strong id="participantName">Team</strong></p>
                     <div class="team-grid" id="teamSelectionGrid"></div>
                     <button onclick="confirmTeamSelection()" style="margin-top: 2rem;">Confirm and Next Player</button>
                 </div>
@@ -447,8 +172,16 @@
                     <div class="leaderboard" id="leaderboard"></div>
                 </div>
                 <div class="card">
-                    <h2>Latest Matches</h2>
-                    <div id="matchFeed"></div>
+                    <h2>Tournament Results</h2>
+                    <div id="resultsFeed"></div>
+                </div>
+                <div class="card">
+                    <h2>Upcoming Matches</h2>
+                    <div id="upcomingFeed"></div>
+                </div>
+                <div class="card" id="friendliesCard" style="display: none;">
+                    <h2>Warm-up Friendlies <span style="font-size:0.8rem; color:#9FC5DC; font-weight:400;">(do not count toward points)</span></h2>
+                    <div id="friendliesFeed"></div>
                 </div>
                 <div class="card" id="newsCard" style="display: none;">
                     <h2>World Cup News</h2>
@@ -458,114 +191,66 @@
         </div>
     </div>
 
-    <div class="modal" id="settingsModal">
-        <div class="modal-content"></div>
-    </div>
+    <div class="modal" id="settingsModal"><div class="modal-content"></div></div>
 
     <script>
         const TEAMS = [
-            { name: 'USA', code: 'us' },
-            { name: 'Mexico', code: 'mx' },
-            { name: 'Canada', code: 'ca' },
-            { name: 'England', code: 'gb-eng' },
-            { name: 'France', code: 'fr' },
-            { name: 'Germany', code: 'de' },
-            { name: 'Spain', code: 'es' },
-            { name: 'Italy', code: 'it' },
-            { name: 'Netherlands', code: 'nl' },
-            { name: 'Portugal', code: 'pt' },
-            { name: 'Belgium', code: 'be' },
-            { name: 'Switzerland', code: 'ch' },
-            { name: 'Austria', code: 'at' },
-            { name: 'Czechia', code: 'cz' },
-            { name: 'Poland', code: 'pl' },
-            { name: 'Ukraine', code: 'ua' },
-            { name: 'Serbia', code: 'rs' },
-            { name: 'Croatia', code: 'hr' },
-            { name: 'Denmark', code: 'dk' },
-            { name: 'Sweden', code: 'se' },
-            { name: 'Argentina', code: 'ar' },
-            { name: 'Brazil', code: 'br' },
-            { name: 'Uruguay', code: 'uy' },
-            { name: 'Colombia', code: 'co' },
-            { name: 'Chile', code: 'cl' },
-            { name: 'Ecuador', code: 'ec' },
-            { name: 'Peru', code: 'pe' },
-            { name: 'Paraguay', code: 'py' },
-            { name: 'Venezuela', code: 've' },
-            { name: 'Costa Rica', code: 'cr' },
-            { name: 'Panama', code: 'pa' },
-            { name: 'Honduras', code: 'hn' },
-            { name: 'Jamaica', code: 'jm' },
-            { name: 'Japan', code: 'jp' },
-            { name: 'South Korea', code: 'kr' },
-            { name: 'Iran', code: 'ir' },
-            { name: 'Saudi Arabia', code: 'sa' },
-            { name: 'Australia', code: 'au' },
-            { name: 'New Zealand', code: 'nz' },
-            { name: 'Morocco', code: 'ma' },
-            { name: 'Egypt', code: 'eg' },
-            { name: 'Nigeria', code: 'ng' },
-            { name: 'Senegal', code: 'sn' },
-            { name: 'Cameroon', code: 'cm' },
-            { name: 'Ghana', code: 'gh' },
-            { name: 'Tunisia', code: 'tn' },
-            { name: 'Algeria', code: 'dz' },
-            { name: 'Uzbekistan', code: 'uz' }
+            { name: 'USA', code: 'us' }, { name: 'Mexico', code: 'mx' }, { name: 'Canada', code: 'ca' },
+            { name: 'England', code: 'gb-eng' }, { name: 'France', code: 'fr' }, { name: 'Germany', code: 'de' },
+            { name: 'Spain', code: 'es' }, { name: 'Italy', code: 'it' }, { name: 'Netherlands', code: 'nl' },
+            { name: 'Portugal', code: 'pt' }, { name: 'Belgium', code: 'be' }, { name: 'Switzerland', code: 'ch' },
+            { name: 'Austria', code: 'at' }, { name: 'Czechia', code: 'cz' }, { name: 'Poland', code: 'pl' },
+            { name: 'Ukraine', code: 'ua' }, { name: 'Serbia', code: 'rs' }, { name: 'Croatia', code: 'hr' },
+            { name: 'Denmark', code: 'dk' }, { name: 'Sweden', code: 'se' }, { name: 'Argentina', code: 'ar' },
+            { name: 'Brazil', code: 'br' }, { name: 'Uruguay', code: 'uy' }, { name: 'Colombia', code: 'co' },
+            { name: 'Chile', code: 'cl' }, { name: 'Ecuador', code: 'ec' }, { name: 'Peru', code: 'pe' },
+            { name: 'Paraguay', code: 'py' }, { name: 'Venezuela', code: 've' }, { name: 'Costa Rica', code: 'cr' },
+            { name: 'Panama', code: 'pa' }, { name: 'Honduras', code: 'hn' }, { name: 'Jamaica', code: 'jm' },
+            { name: 'Japan', code: 'jp' }, { name: 'South Korea', code: 'kr' }, { name: 'Iran', code: 'ir' },
+            { name: 'Saudi Arabia', code: 'sa' }, { name: 'Australia', code: 'au' }, { name: 'New Zealand', code: 'nz' },
+            { name: 'Morocco', code: 'ma' }, { name: 'Egypt', code: 'eg' }, { name: 'Nigeria', code: 'ng' },
+            { name: 'Senegal', code: 'sn' }, { name: 'Cameroon', code: 'cm' }, { name: 'Ghana', code: 'gh' },
+            { name: 'Tunisia', code: 'tn' }, { name: 'Algeria', code: 'dz' }, { name: 'Uzbekistan', code: 'uz' }
         ];
+        function flagUrl(code, size) { return `https://flagcdn.com/${size || 'w80'}/${code}.png`; }
+        function getTeam(name) { return TEAMS.find(t => t.name === name); }
 
-        function flagUrl(code, size) {
-            return `https://flagcdn.com/${size || 'w80'}/${code}.png`;
-        }
+        const SCORING = { groupWin: 3, draw: 1, ro32: 5, ro16: 10, qf: 15, sf: 20, runnerUp: 20, winner: 50, topScorer: 10 };
+        const STAGE_LABELS = { group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-final', sf: 'Semi-final', final: 'Final' };
 
-        function getTeam(name) {
-            return TEAMS.find(t => t.name === name);
-        }
-
-        const SCORING = {
-            groupWin: 3, draw: 1, ro32: 5, ro16: 10,
-            qf: 15, sf: 20, runnerUp: 20, winner: 50, topScorer: 10
-        };
-
-        const STAGE_LABELS = {
-            group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16',
-            qf: 'Quarter-final', sf: 'Semi-final', final: 'Final'
-        };
+        const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
 
         let appState = {
             participants: ['Andy', 'Ajit', 'Ian', 'Lisa', 'Alison', 'Paul', 'George', 'Nick'],
             teamAssignments: {},
-            matches: [],
+            results: [],
+            upcoming: [],
+            friendlies: [],
             news: [],
-            shareCode: null,
+            movementNews: [],
+            topScorerTeam: null,
             apiKey: null,
+            jsonbinKey: null,
+            binId: null,
             currentSetupStep: 0,
             selectedTeams: [],
             setupComplete: false,
             previousRanks: {},
-            blobId: null,
-            movementNews: [],
             lastUpdated: null
         };
 
-        const JSONBLOB_BASE = 'https://jsonblob.com/api/jsonBlob';
-        let IS_VIEWER = false;
-        let VIEW_BLOB_ID = null;
+        let IS_VIEWER = false, VIEW_BIN_ID = null;
 
         function detectMode() {
             const params = new URLSearchParams(window.location.search);
-            VIEW_BLOB_ID = params.get('view');
-            IS_VIEWER = !!VIEW_BLOB_ID;
+            VIEW_BIN_ID = params.get('view');
+            IS_VIEWER = !!VIEW_BIN_ID;
         }
 
         function initializeApp() {
             detectMode();
-            if (IS_VIEWER) {
-                initViewerMode();
-                return;
-            }
+            if (IS_VIEWER) { initViewerMode(); return; }
             loadFromLocalStorage();
-            generateShareCode();
             if (Object.keys(appState.teamAssignments).length === 8) {
                 showScreen('dashboardScreen');
                 updateDashboard();
@@ -578,7 +263,7 @@
             document.getElementById('masterActions').style.display = 'none';
             document.getElementById('viewerActions').style.display = 'flex';
             showScreen('dashboardScreen');
-            document.getElementById('leaderboard').innerHTML = '<p class="info-text">Loading latest standings...</p>';
+            document.getElementById('leaderboard').innerHTML = '<p class="empty-note">Loading latest standings...</p>';
             await viewerRefresh();
         }
 
@@ -586,17 +271,16 @@
             const btn = document.getElementById('refreshBtn');
             if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
             try {
-                const res = await fetch(`${JSONBLOB_BASE}/${VIEW_BLOB_ID}`, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                if (!res.ok) throw new Error('Could not load sweepstake data');
+                const res = await fetch(`${JSONBIN_BASE}/${VIEW_BIN_ID}/latest`, { headers: { 'X-Bin-Meta': 'false' } });
+                if (!res.ok) throw new Error('Could not load data (HTTP ' + res.status + ')');
                 const data = await res.json();
-                appState = { ...appState, ...data };
+                const record = data.record ? data.record : data;
+                appState = { ...appState, ...record };
                 updateDashboard();
                 renderViewerBanner();
             } catch (e) {
                 console.error(e);
-                document.getElementById('leaderboard').innerHTML = '<p class="info-text">⚠️ Could not load data. The link may be invalid or no results have been published yet.</p>';
+                document.getElementById('leaderboard').innerHTML = '<p class="empty-note">⚠️ Could not load data. The link may be invalid, or results haven\'t been published yet.</p>';
             } finally {
                 if (btn) { btn.disabled = false; btn.innerHTML = '↻ Refresh'; }
             }
@@ -606,54 +290,39 @@
             const banner = document.getElementById('viewerBanner');
             banner.style.display = 'block';
             const updated = appState.lastUpdated ? new Date(appState.lastUpdated).toLocaleString() : 'unknown';
-            banner.innerHTML = `You're viewing a shared sweepstake. <strong>Last updated:</strong> ${updated}. Click <strong>↻ Refresh</strong> for the latest standings.`;
+            banner.innerHTML = `You're viewing a shared sweepstake. <strong>Last updated:</strong> ${updated}. Click <strong>↻ Refresh</strong> for the latest.`;
         }
 
         function loadFromLocalStorage() {
             const stored = localStorage.getItem('wc2026_state');
-            if (stored) {
-                appState = { ...appState, ...JSON.parse(stored) };
-            }
-            // Remove any stored matches without valid numeric scores (e.g. unplayed fixtures)
-            appState.matches = (appState.matches || []).filter(m =>
-                m && typeof m.home_score === 'number' && typeof m.away_score === 'number'
-            );
+            if (stored) { appState = { ...appState, ...JSON.parse(stored) }; }
+            appState.results = cleanScored(appState.results);
+            appState.friendlies = cleanScored(appState.friendlies);
+            appState.upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
             const apiKey = localStorage.getItem('wc2026_apiKey');
             if (apiKey) appState.apiKey = apiKey;
+            const jbKey = localStorage.getItem('wc2026_jsonbinKey');
+            if (jbKey) appState.jsonbinKey = jbKey;
+        }
+
+        function cleanScored(arr) {
+            return (arr || []).filter(m => m && m.home_team && m.away_team && typeof m.home_score === 'number' && typeof m.away_score === 'number');
         }
 
         function saveToLocalStorage() {
             localStorage.setItem('wc2026_state', JSON.stringify({
-                participants: appState.participants,
-                teamAssignments: appState.teamAssignments,
-                matches: appState.matches,
-                news: appState.news,
-                shareCode: appState.shareCode,
-                setupComplete: appState.setupComplete,
-                previousRanks: appState.previousRanks,
-                blobId: appState.blobId,
-                movementNews: appState.movementNews,
-                topScorerTeam: appState.topScorerTeam || null,
-                lastUpdated: appState.lastUpdated
+                participants: appState.participants, teamAssignments: appState.teamAssignments,
+                results: appState.results, upcoming: appState.upcoming, friendlies: appState.friendlies,
+                news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam,
+                binId: appState.binId, setupComplete: appState.setupComplete,
+                previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
             }));
-        }
-
-        function generateShareCode() {
-            if (!appState.shareCode) {
-                appState.shareCode = Math.random().toString(36).substr(2, 9).toUpperCase();
-                saveToLocalStorage();
-            }
         }
 
         function startWithDefaults() {
             const apiKey = document.getElementById('apiKey').value.trim();
-            if (apiKey) {
-                appState.apiKey = apiKey;
-                localStorage.setItem('wc2026_apiKey', apiKey);
-            }
-            appState.setupComplete = false;
-            appState.selectedTeams = [];
-            appState.currentSetupStep = 0;
+            if (apiKey) { appState.apiKey = apiKey; localStorage.setItem('wc2026_apiKey', apiKey); }
+            appState.setupComplete = false; appState.selectedTeams = []; appState.currentSetupStep = 0;
             appState.teamAssignments = {};
             appState.participants.forEach(p => { appState.teamAssignments[p] = []; });
             saveToLocalStorage();
@@ -663,12 +332,8 @@
 
         function startNewSweepstake() {
             const apiKey = document.getElementById('apiKey').value.trim();
-            if (apiKey) {
-                appState.apiKey = apiKey;
-                localStorage.setItem('wc2026_apiKey', apiKey);
-            }
-            appState.selectedTeams = [];
-            appState.currentSetupStep = 0;
+            if (apiKey) { appState.apiKey = apiKey; localStorage.setItem('wc2026_apiKey', apiKey); }
+            appState.selectedTeams = []; appState.currentSetupStep = 0;
             showScreen('setupScreen');
             renderParticipantInputs();
         }
@@ -679,10 +344,7 @@
             for (let i = 0; i < 8; i++) {
                 const input = document.createElement('div');
                 input.className = 'participant-input-group';
-                input.innerHTML = `
-                    <label>Participant ${i + 1}</label>
-                    <input type="text" id="participant${i}" placeholder="Name" value="${appState.participants[i] || ''}" />
-                `;
+                input.innerHTML = `<label>Participant ${i + 1}</label><input type="text" id="participant${i}" placeholder="Name" value="${appState.participants[i] || ''}" />`;
                 container.appendChild(input);
             }
         }
@@ -722,11 +384,7 @@
                 const isAssigned = Object.values(appState.teamAssignments).flat().includes(team.name) && !isSelected;
                 if (isSelected) tile.classList.add('selected');
                 if (isAssigned) { tile.classList.add('assigned'); tile.classList.add('unavailable'); }
-                tile.innerHTML = `
-                    <img class="team-flag" src="${flagUrl(team.code)}" alt="${team.name}" loading="lazy" />
-                    <div class="team-name">${team.name}</div>
-                    ${isAssigned ? `<div class="team-owner">${getTeamOwner(team.name)}</div>` : ''}
-                `;
+                tile.innerHTML = `<img class="team-flag" src="${flagUrl(team.code)}" alt="${team.name}" loading="lazy" /><div class="team-name">${team.name}</div>${isAssigned ? `<div class="team-owner">${getTeamOwner(team.name)}</div>` : ''}`;
                 if (!isAssigned || isSelected) tile.onclick = () => toggleTeamSelection(team.name);
                 grid.appendChild(tile);
             });
@@ -735,14 +393,9 @@
 
         function toggleTeamSelection(teamName) {
             const index = appState.selectedTeams.indexOf(teamName);
-            if (index > -1) {
-                appState.selectedTeams.splice(index, 1);
-            } else if (appState.selectedTeams.length < 6) {
-                appState.selectedTeams.push(teamName);
-            } else {
-                showToast('You can only select 6 teams');
-                return;
-            }
+            if (index > -1) appState.selectedTeams.splice(index, 1);
+            else if (appState.selectedTeams.length < 6) appState.selectedTeams.push(teamName);
+            else { showToast('You can only select 6 teams'); return; }
             updateTeamGrid();
         }
 
@@ -754,10 +407,7 @@
         }
 
         function confirmTeamSelection() {
-            if (appState.selectedTeams.length !== 6) {
-                showToast('Please select exactly 6 teams');
-                return;
-            }
+            if (appState.selectedTeams.length !== 6) { showToast('Please select exactly 6 teams'); return; }
             const currentParticipant = appState.participants[appState.currentSetupStep];
             appState.teamAssignments[currentParticipant] = [...appState.selectedTeams];
             saveToLocalStorage();
@@ -775,52 +425,35 @@
 
         function updateDashboard() {
             renderLeaderboard();
-            renderMatchFeed();
+            renderResults();
+            renderUpcoming();
+            renderFriendlies();
             renderNews();
         }
 
         function renderLeaderboard() {
             const leaderboard = document.getElementById('leaderboard');
             const scores = calculateScores();
-            const sortedScores = Object.entries(scores)
-                .sort((a, b) => b[1].total - a[1].total)
-                .map(([name, data], index) => ({ name, ...data, rank: index + 1 }));
-
-            leaderboard.innerHTML = sortedScores.map(entry => {
-                const prevRank = appState.previousRanks[entry.name];
+            const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total).map(([name, data], i) => ({ name, ...data, rank: i + 1 }));
+            const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
+            leaderboard.innerHTML = sorted.map(entry => {
+                const prevRank = appState.previousRanks ? appState.previousRanks[entry.name] : undefined;
                 let movement = '<span class="movement-same">—</span>';
                 if (prevRank !== undefined) {
                     if (prevRank > entry.rank) movement = '<span class="movement-up">↑ ' + (prevRank - entry.rank) + '</span>';
                     else if (prevRank < entry.rank) movement = '<span class="movement-down">↓ ' + (entry.rank - prevRank) + '</span>';
                 }
                 const teams = appState.teamAssignments[entry.name] || [];
-                const teamFlags = teams.map(t => {
-                    const team = getTeam(t);
-                    return team ? `<img src="${flagUrl(team.code, 'w40')}" alt="${t}" title="${t}" />` : '';
-                }).join('');
-                const breakdown = teams.map(t => {
-                    const team = getTeam(t);
-                    const pts = entry.breakdown[t] || 0;
-                    return `<div class="breakdown-team">
-                        <img src="${flagUrl(team.code, 'w40')}" alt="${t}" />
-                        <span>${t}</span>
-                        <span class="breakdown-points">${pts} pts</span>
-                    </div>`;
-                }).join('');
-
-                return `
-                <div class="leaderboard-row" onclick="toggleBreakdown('${entry.name}')">
+                const teamFlags = teams.map(t => { const tm = getTeam(t); return tm ? `<img src="${flagUrl(tm.code, 'w40')}" alt="${t}" title="${t}" />` : ''; }).join('');
+                const breakdown = teams.map(t => { const tm = getTeam(t); const pts = entry.breakdown[t] || 0; return `<div class="breakdown-team"><img src="${flagUrl(tm.code, 'w40')}" alt="${t}" /><span>${t}</span><span class="breakdown-points">${pts} pts</span></div>`; }).join('');
+                return `<div class="leaderboard-row" onclick="toggleBreakdown('${entry.name}')">
                     <div class="leaderboard-rank">${entry.rank}</div>
-                    <div class="leaderboard-name-row">
-                        <div class="leaderboard-name">${entry.name}</div>
-                        <div class="leaderboard-teams">${teamFlags}</div>
-                    </div>
+                    <div class="leaderboard-name-row"><div class="leaderboard-name">${entry.name}</div><div class="leaderboard-teams">${teamFlags}</div></div>
                     <div class="leaderboard-movement">${movement}</div>
                     <div class="leaderboard-points">${entry.total}</div>
                     <div class="player-breakdown" id="breakdown-${entry.name}">${breakdown}</div>
                 </div>`;
             }).join('');
-
             if (!IS_VIEWER) {
                 const editDiv = document.createElement('div');
                 editDiv.style.marginTop = '2rem';
@@ -840,8 +473,7 @@
                 scores[p] = { total: 0, breakdown: {} };
                 (appState.teamAssignments[p] || []).forEach(t => { scores[p].breakdown[t] = 0; });
             });
-
-            appState.matches.forEach(match => {
+            (appState.results || []).forEach(match => {
                 for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
                     [match.home_team, match.away_team].forEach(teamName => {
                         if (!teams.includes(teamName)) return;
@@ -854,25 +486,20 @@
                             else if (myScore === oppScore) pts = SCORING.draw;
                         } else {
                             let advanced = myScore > oppScore;
-                            if (myScore === oppScore && match.penalties_winner) {
-                                advanced = match.penalties_winner === teamName;
-                            }
+                            if (myScore === oppScore && match.penalties_winner) advanced = match.penalties_winner === teamName;
                             if (advanced) {
                                 if (match.stage === 'ro32') pts = SCORING.ro32;
                                 else if (match.stage === 'ro16') pts = SCORING.ro16;
                                 else if (match.stage === 'qf') pts = SCORING.qf;
                                 else if (match.stage === 'sf') pts = SCORING.sf;
                                 else if (match.stage === 'final') pts = SCORING.winner;
-                            } else if (match.stage === 'final') {
-                                pts = SCORING.runnerUp;
-                            }
+                            } else if (match.stage === 'final') { pts = SCORING.runnerUp; }
                         }
                         scores[owner].total += pts;
                         scores[owner].breakdown[teamName] = (scores[owner].breakdown[teamName] || 0) + pts;
                     });
                 }
             });
-
             if (appState.topScorerTeam) {
                 for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
                     if (teams.includes(appState.topScorerTeam)) {
@@ -881,41 +508,58 @@
                     }
                 }
             }
-
             return scores;
         }
 
-        function renderMatchFeed() {
-            const feed = document.getElementById('matchFeed');
-            const validMatches = (appState.matches || []).filter(m =>
-                m && typeof m.home_score === 'number' && typeof m.away_score === 'number'
-            );
-            if (validMatches.length === 0) {
-                feed.innerHTML = '<p class="info-text">🏟️ Tournament begins June 2026. Click "Sync Latest" to pull live match results once games have been played.</p>';
+        function matchCardHtml(match, opts) {
+            opts = opts || {};
+            const homeTeam = getTeam(match.home_team);
+            const awayTeam = getTeam(match.away_team);
+            const stageLabel = opts.warmup ? 'Warm-up Friendly' : (STAGE_LABELS[match.stage] || match.stage || 'Match');
+            const stageClass = opts.warmup ? 'match-stage warmup' : 'match-stage';
+            const scoreOrVs = opts.upcoming
+                ? `<div class="match-result" style="font-size:1rem; color:#7DB8D8;">vs</div>`
+                : `<div class="match-result">${match.home_score} <span class="match-vs">vs</span> ${match.away_score}</div>`;
+            const kickoff = opts.upcoming && match.kickoff ? `<div class="match-kickoff">${match.kickoff}</div>` : '';
+            return `<div class="match-item${opts.warmup ? ' friendly' : ''}">
+                <div class="match-header"><div class="${stageClass}">${stageLabel}</div>${kickoff}</div>
+                <div class="match-score">
+                    <div class="team-matchup">${homeTeam ? `<img src="${flagUrl(homeTeam.code)}" alt="${match.home_team}" />` : ''}<div class="team-matchup-name">${match.home_team}</div></div>
+                    ${scoreOrVs}
+                    <div class="team-matchup">${awayTeam ? `<img src="${flagUrl(awayTeam.code)}" alt="${match.away_team}" />` : ''}<div class="team-matchup-name">${match.away_team}</div></div>
+                </div>
+                ${match.quip ? `<div class="match-commentary">"${match.quip}"</div>` : ''}
+                ${opts.warmup ? '<div class="match-note">Friendly — does not count toward sweepstake points</div>' : ''}
+            </div>`;
+        }
+
+        function renderResults() {
+            const feed = document.getElementById('resultsFeed');
+            const results = cleanScored(appState.results);
+            if (results.length === 0) {
+                feed.innerHTML = '<p class="empty-note">🏟️ No tournament results yet — the World Cup kicks off 11 June 2026. Completed matches and points will appear here once games are played.</p>';
                 return;
             }
-            feed.innerHTML = validMatches.slice(-8).reverse().map(match => {
-                const homeTeam = getTeam(match.home_team);
-                const awayTeam = getTeam(match.away_team);
-                return `
-                <div class="match-item">
-                    <div class="match-header">
-                        <div class="match-stage">${STAGE_LABELS[match.stage] || match.stage}</div>
-                    </div>
-                    <div class="match-score">
-                        <div class="team-matchup">
-                            ${homeTeam ? `<img src="${flagUrl(homeTeam.code)}" alt="${match.home_team}" />` : ''}
-                            <div class="team-matchup-name">${match.home_team}</div>
-                        </div>
-                        <div class="match-result">${match.home_score} <span class="match-vs">vs</span> ${match.away_score}</div>
-                        <div class="team-matchup">
-                            ${awayTeam ? `<img src="${flagUrl(awayTeam.code)}" alt="${match.away_team}" />` : ''}
-                            <div class="team-matchup-name">${match.away_team}</div>
-                        </div>
-                    </div>
-                    ${match.quip ? `<div class="match-commentary">"${match.quip}"</div>` : ''}
-                </div>`;
-            }).join('');
+            feed.innerHTML = results.slice(-12).reverse().map(m => matchCardHtml(m, {})).join('');
+        }
+
+        function renderUpcoming() {
+            const feed = document.getElementById('upcomingFeed');
+            const upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
+            if (upcoming.length === 0) {
+                feed.innerHTML = '<p class="empty-note">No upcoming fixtures loaded yet. Click "Sync Latest" to pull the schedule.</p>';
+                return;
+            }
+            feed.innerHTML = upcoming.slice(0, 12).map(m => matchCardHtml(m, { upcoming: true })).join('');
+        }
+
+        function renderFriendlies() {
+            const card = document.getElementById('friendliesCard');
+            const feed = document.getElementById('friendliesFeed');
+            const friendlies = cleanScored(appState.friendlies);
+            if (friendlies.length === 0) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+            feed.innerHTML = friendlies.slice(-8).reverse().map(m => matchCardHtml(m, { warmup: true })).join('');
         }
 
         function renderNews() {
@@ -925,71 +569,46 @@
             const news = appState.news || [];
             if (movement.length === 0 && news.length === 0) { newsCard.style.display = 'none'; return; }
             newsCard.style.display = 'block';
-
-            const movementHtml = movement.slice(0, 4).map(item => `
-                <div class="news-item movement">
-                    <div class="news-headline">${item.headline}</div>
-                    <div class="news-summary">${item.summary}</div>
-                    <div class="news-time">${new Date(item.timestamp).toLocaleString()}</div>
-                </div>
-            `).join('');
-
-            const newsHtml = news.slice(0, 6).map(item => `
-                <div class="news-item">
-                    <div class="news-headline">${item.headline}</div>
-                    <div class="news-summary">${item.summary}</div>
-                    <div class="news-time">${new Date(item.timestamp).toLocaleDateString()}</div>
-                </div>
-            `).join('');
-
-            newsFeed.innerHTML = movementHtml + newsHtml;
+            const mHtml = movement.slice(0, 4).map(item => `<div class="news-item movement"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleString()}</div></div>`).join('');
+            const nHtml = news.slice(0, 6).map(item => `<div class="news-item"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleDateString()}</div></div>`).join('');
+            newsFeed.innerHTML = mHtml + nHtml;
         }
 
         async function syncData() {
-            if (!appState.apiKey) {
-                showToast('❌ Please enter API key in Settings first');
-                return;
-            }
+            if (!appState.apiKey) { showToast('❌ Enter your Anthropic API key in Settings first'); return; }
             const syncBtn = document.getElementById('syncBtn');
             syncBtn.disabled = true;
             syncBtn.innerHTML = '<span class="spinner"></span>Syncing...';
-
             const ranksBefore = computeRanks();
-
             try {
                 const matchData = await fetchMatchUpdates();
                 await new Promise(r => setTimeout(r, 1500));
                 const newsData = await fetchNews();
 
-                if (matchData.matches && matchData.matches.length > 0) {
-                    appState.matches = [...appState.matches, ...matchData.matches.filter(m =>
-                        !appState.matches.some(existing => existing.match_id === m.match_id)
-                    )];
+                if (matchData.results && matchData.results.length) {
+                    appState.results = mergeById(appState.results, cleanScored(matchData.results));
                 }
-                if (matchData.top_scorer_team) {
-                    appState.topScorerTeam = matchData.top_scorer_team;
+                if (matchData.friendlies && matchData.friendlies.length) {
+                    appState.friendlies = mergeById(appState.friendlies, cleanScored(matchData.friendlies));
                 }
-                if (newsData.length > 0) {
-                    appState.news = [...newsData, ...appState.news].slice(0, 8);
+                if (matchData.upcoming && matchData.upcoming.length) {
+                    appState.upcoming = (matchData.upcoming || []).filter(m => m && m.home_team && m.away_team);
                 }
+                if (matchData.top_scorer_team) appState.topScorerTeam = matchData.top_scorer_team;
+                if (newsData.length) appState.news = [...newsData, ...appState.news].slice(0, 8);
 
                 const ranksAfter = computeRanks();
                 const moves = detectMovement(ranksBefore, ranksAfter);
-                if (moves.length > 0) {
-                    appState.movementNews = [...moves, ...appState.movementNews].slice(0, 6);
-                    showToast('📈 ' + moves[0].summary);
-                }
-
+                if (moves.length) { appState.movementNews = [...moves, ...appState.movementNews].slice(0, 6); showToast('📈 ' + moves[0].summary); }
                 const prevPlain = {};
                 Object.keys(ranksBefore).forEach(n => { prevPlain[n] = ranksBefore[n].rank; });
                 appState.previousRanks = prevPlain;
-
                 appState.lastUpdated = new Date().toISOString();
                 saveToLocalStorage();
                 updateDashboard();
 
-                await publishToViewers();
-                showToast('✓ Synced & published to viewers');
+                const ok = await publishToViewers();
+                showToast(ok ? '✓ Synced & published to viewers' : '✓ Synced locally (publish failed — see Settings)');
             } catch (error) {
                 console.error('Sync error:', error);
                 showToast('❌ ' + error.message);
@@ -999,11 +618,15 @@
             }
         }
 
+        function mergeById(existing, incoming) {
+            const out = [...existing];
+            incoming.forEach(m => { if (!out.some(e => e.match_id === m.match_id)) out.push(m); });
+            return out;
+        }
+
         function computeRanks() {
             const scores = calculateScores();
-            const sorted = Object.entries(scores)
-                .sort((a, b) => b[1].total - a[1].total)
-                .map(([name, data], index) => ({ name, total: data.total, rank: index + 1 }));
+            const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total).map(([name, data], i) => ({ name, total: data.total, rank: i + 1 }));
             const ranks = {};
             sorted.forEach(e => { ranks[e.name] = { rank: e.rank, total: e.total }; });
             return ranks;
@@ -1013,76 +636,46 @@
             const moves = [];
             const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
             Object.keys(after).forEach(name => {
-                const b = before[name];
-                const a = after[name];
-                if (!b) return;
-                if (a.rank < b.rank) {
-                    // moved up - find who they overtook
-                    const overtaken = Object.keys(after).filter(other =>
-                        other !== name && before[other] && before[other].rank < b.rank && after[other].rank > a.rank
-                    );
-                    let summary;
-                    if (overtaken.length === 1) {
-                        summary = `${name} has overtaken ${overtaken[0]} into ${ordinal(a.rank)} place.`;
-                    } else if (overtaken.length > 1) {
-                        summary = `${name} surged past ${overtaken.length} players into ${ordinal(a.rank)} place.`;
-                    } else {
-                        summary = `${name} climbed to ${ordinal(a.rank)} place.`;
-                    }
-                    moves.push({
-                        id: 'mv' + Date.now() + name,
-                        headline: `📈 ${name} climbs to ${ordinal(a.rank)}`,
-                        summary: summary,
-                        timestamp: new Date().toISOString(),
-                        isMovement: true
-                    });
-                }
+                const b = before[name], a = after[name];
+                if (!b || a.rank >= b.rank) return;
+                const overtaken = Object.keys(after).filter(o => o !== name && before[o] && before[o].rank < b.rank && after[o].rank > a.rank);
+                let summary;
+                if (overtaken.length === 1) summary = `${name} has overtaken ${overtaken[0]} into ${ordinal(a.rank)} place.`;
+                else if (overtaken.length > 1) summary = `${name} surged past ${overtaken.length} players into ${ordinal(a.rank)} place.`;
+                else summary = `${name} climbed to ${ordinal(a.rank)} place.`;
+                moves.push({ id: 'mv' + Date.now() + name, headline: `📈 ${name} climbs to ${ordinal(a.rank)}`, summary, timestamp: new Date().toISOString() });
             });
             return moves;
         }
 
         async function publishToViewers() {
+            if (!appState.jsonbinKey) { showToast('⚠️ Add a jsonbin.io key in Settings to share with viewers'); return false; }
             const payload = {
-                participants: appState.participants,
-                teamAssignments: appState.teamAssignments,
-                matches: appState.matches,
-                news: appState.news,
-                movementNews: appState.movementNews,
-                topScorerTeam: appState.topScorerTeam || null,
-                previousRanks: appState.previousRanks,
-                lastUpdated: appState.lastUpdated
+                participants: appState.participants, teamAssignments: appState.teamAssignments,
+                results: appState.results, upcoming: appState.upcoming, friendlies: appState.friendlies,
+                news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam || null,
+                previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
             };
-
             try {
-                if (!appState.blobId) {
-                    const res = await fetch(JSONBLOB_BASE, {
+                if (!appState.binId) {
+                    const res = await fetch(JSONBIN_BASE, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-Master-Key': appState.jsonbinKey, 'X-Bin-Private': 'false', 'X-Bin-Name': 'WC2026 Sweepstake' },
                         body: JSON.stringify(payload)
                     });
-                    if (!res.ok) {
-                        const t = await res.text();
-                        throw new Error(`publish HTTP ${res.status}: ${t.slice(0, 80)}`);
-                    }
-                    const headerId = res.headers.get('x-jsonblob');
-                    const loc = res.headers.get('location') || res.headers.get('Location') || '';
-                    const blobId = headerId || (loc ? loc.split('/').pop() : null);
-                    if (!blobId) {
-                        throw new Error('publish succeeded but blob ID was not readable (CORS header hidden)');
-                    }
-                    appState.blobId = blobId;
+                    if (!res.ok) { const t = await res.text(); throw new Error(`create HTTP ${res.status}: ${t.slice(0, 90)}`); }
+                    const data = await res.json();
+                    appState.binId = data.metadata && data.metadata.id ? data.metadata.id : null;
+                    if (!appState.binId) throw new Error('bin created but no ID returned');
                     saveToLocalStorage();
                     return true;
                 } else {
-                    const res = await fetch(`${JSONBLOB_BASE}/${appState.blobId}`, {
+                    const res = await fetch(`${JSONBIN_BASE}/${appState.binId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'X-Master-Key': appState.jsonbinKey },
                         body: JSON.stringify(payload)
                     });
-                    if (!res.ok) {
-                        const t = await res.text();
-                        throw new Error(`update HTTP ${res.status}: ${t.slice(0, 80)}`);
-                    }
+                    if (!res.ok) { const t = await res.text(); throw new Error(`update HTTP ${res.status}: ${t.slice(0, 90)}`); }
                     return true;
                 }
             } catch (e) {
@@ -1093,62 +686,54 @@
         }
 
         async function manualPublish() {
+            if (!appState.jsonbinKey) { showToast('❌ Add your jsonbin.io key first'); return; }
             appState.lastUpdated = new Date().toISOString();
             saveToLocalStorage();
             const ok = await publishToViewers();
-            if (ok && appState.blobId) {
-                showToast('✓ Published! Viewer link ready in Settings');
-                showSettings();
-            }
+            if (ok && appState.binId) { showToast('✓ Published! Viewer link ready in Settings'); showSettings(); }
         }
 
         async function fetchMatchUpdates() {
             const teamList = TEAMS.map(t => t.name).join(', ');
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': appState.apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
+                headers: { 'Content-Type': 'application/json', 'x-api-key': appState.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-6',
-                    max_tokens: 1024,
-                    system: 'You provide World Cup 2026 match results. Use web search to find FINISHED matches only. Return ONLY valid JSON, no markdown.',
+                    max_tokens: 1500,
+                    system: 'You provide World Cup 2026 football data using web search. Return ONLY valid JSON, no markdown.',
                     messages: [{
                         role: 'user',
-                        content: `Find COMPLETED World Cup 2026 match results that have a final score. Do NOT include upcoming or unplayed fixtures. If no matches have been played yet, return an empty matches array. Only use these team names: ${teamList}. Return ONLY this JSON:
+                        content: `Using web search, find current World Cup 2026 data. Only use these national team names: ${teamList}.
+Provide three lists:
+1. "results": COMPLETED official World Cup 2026 tournament matches with final scores (empty array if the tournament hasn't started).
+2. "upcoming": the next scheduled World Cup 2026 fixtures (no scores), include a short "kickoff" date/time string if known.
+3. "friendlies": recent international warm-up/friendly results involving these teams (with scores).
+Return ONLY this JSON:
 {
-  "matches": [
-    { "match_id": "unique_id", "home_team": "Team", "away_team": "Team", "home_score": 2, "away_score": 1, "stage": "group", "penalties_winner": null, "quip": "One-line commentary" }
-  ],
+  "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "quip": "one line" } ],
+  "upcoming": [ { "match_id": "u_id", "home_team": "Team", "away_team": "Team", "stage": "group", "kickoff": "Jun 11, 8pm", "quip": "one line" } ],
+  "friendlies": [ { "match_id": "f_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "quip": "one line" } ],
   "top_scorer_team": null
 }`
                     }],
-                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
+                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }]
                 })
             });
-
             if (!response.ok) {
                 const err = await response.text();
-                if (response.status === 429) {
-                    throw new Error('Rate limit hit — wait ~60s and try again, or sync less often.');
-                }
+                if (response.status === 429) throw new Error('Rate limit hit — wait ~60s and try again.');
                 throw new Error(`API ${response.status}: ${err.slice(0, 80)}`);
             }
-
             const data = await response.json();
             const textBlock = data.content.find(c => c.type === 'text');
-            if (!textBlock) return { matches: [] };
+            if (!textBlock) return { results: [], upcoming: [], friendlies: [] };
             const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) return { matches: [] };
+            if (!jsonMatch) return { results: [], upcoming: [], friendlies: [] };
             const parsed = JSON.parse(jsonMatch[0]);
-            // Only keep matches with real, numeric final scores
-            parsed.matches = (parsed.matches || []).filter(m =>
-                m && m.home_team && m.away_team &&
-                typeof m.home_score === 'number' && typeof m.away_score === 'number'
-            );
+            parsed.results = parsed.results || [];
+            parsed.upcoming = parsed.upcoming || [];
+            parsed.friendlies = parsed.friendlies || [];
             return parsed;
         }
 
@@ -1156,29 +741,16 @@
             try {
                 const response = await fetch('https://api.anthropic.com/v1/messages', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-api-key': appState.apiKey,
-                        'anthropic-version': '2023-06-01',
-                        'anthropic-dangerous-direct-browser-access': 'true'
-                    },
+                    headers: { 'Content-Type': 'application/json', 'x-api-key': appState.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
                     body: JSON.stringify({
                         model: 'claude-sonnet-4-6',
                         max_tokens: 768,
-                        system: 'You provide real World Cup 2026 news. Use web search. Return ONLY valid JSON, no markdown.',
-                        messages: [{
-                            role: 'user',
-                            content: `Find 3 latest real World Cup 2026 news items (squad announcements, injuries, predictions, headlines). Return ONLY this JSON:
-{
-  "news": [
-    { "id": "unique_id", "headline": "Headline", "summary": "One sentence", "timestamp": "${new Date().toISOString()}" }
-  ]
-}`
-                        }],
+                        system: 'You provide real World Cup 2026 news using web search. Return ONLY valid JSON, no markdown.',
+                        messages: [{ role: 'user', content: `Find 3 latest real World Cup 2026 news items (squad announcements, injuries, predictions, headlines). Return ONLY this JSON:
+{ "news": [ { "id": "unique_id", "headline": "Headline", "summary": "One sentence", "timestamp": "${new Date().toISOString()}" } ] }` }],
                         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
                     })
                 });
-
                 if (!response.ok) return [];
                 const data = await response.json();
                 const textBlock = data.content.find(c => c.type === 'text');
@@ -1186,24 +758,19 @@
                 const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
                 if (!jsonMatch) return [];
                 return JSON.parse(jsonMatch[0]).news || [];
-            } catch (error) {
-                console.error('News error:', error);
-                return [];
-            }
+            } catch (e) { console.error('News error:', e); return []; }
         }
 
         function editParticipantNames() {
             const modal = document.getElementById('settingsModal');
-            const content = modal.querySelector('.modal-content');
-            content.innerHTML = `
+            modal.querySelector('.modal-content').innerHTML = `
                 <h2 class="modal-title">Edit Participant Names</h2>
                 <p class="info-text" style="margin-bottom: 1.5rem;">Update names as needed. Teams stay assigned to each participant.</p>
                 <div id="editParticipantInputs"></div>
                 <div style="display: flex; gap: 1rem; margin-top: 2rem;">
                     <button onclick="saveParticipantNames()" style="flex: 1;">Save Changes</button>
                     <button class="secondary" onclick="closeSettings()" style="flex: 1;">Cancel</button>
-                </div>
-            `;
+                </div>`;
             const inputs = document.getElementById('editParticipantInputs');
             appState.participants.forEach((name, i) => {
                 const group = document.createElement('div');
@@ -1224,16 +791,12 @@
             const oldToNew = {};
             appState.participants.forEach((oldName, i) => { oldToNew[oldName] = newNames[i]; });
             const newAssignments = {};
-            Object.entries(appState.teamAssignments).forEach(([oldName, teams]) => {
-                newAssignments[oldToNew[oldName]] = teams;
-            });
-            const newPrevRanks = {};
-            Object.entries(appState.previousRanks).forEach(([oldName, rank]) => {
-                if (oldToNew[oldName]) newPrevRanks[oldToNew[oldName]] = rank;
-            });
+            Object.entries(appState.teamAssignments).forEach(([oldName, teams]) => { newAssignments[oldToNew[oldName]] = teams; });
+            const newPrev = {};
+            Object.entries(appState.previousRanks || {}).forEach(([oldName, rank]) => { if (oldToNew[oldName]) newPrev[oldToNew[oldName]] = rank; });
             appState.participants = newNames;
             appState.teamAssignments = newAssignments;
-            appState.previousRanks = newPrevRanks;
+            appState.previousRanks = newPrev;
             saveToLocalStorage();
             updateDashboard();
             closeSettings();
@@ -1242,39 +805,35 @@
 
         function showSettings() {
             const modal = document.getElementById('settingsModal');
-            const viewerLink = appState.blobId
-                ? `${window.location.origin}${window.location.pathname}?view=${appState.blobId}`
-                : null;
-            const viewerSection = viewerLink
-                ? `<div class="participant-input-group">
-                        <label>Viewer Link (send this to colleagues)</label>
-                        <input type="text" value="${viewerLink}" readonly id="viewerLinkInput" />
-                   </div>
-                   <button class="secondary" onclick="copyViewerLink()" style="width: 100%;">Copy Viewer Link</button>`
-                : `<p class="info-text">No viewer link yet. Click "Sync Latest" or "Publish Now" to create one, then share it with colleagues.</p>
-                   <button onclick="manualPublish()" style="width: 100%; margin-top: 0.5rem;">📤 Publish Now</button>`;
-
+            const viewerLink = appState.binId ? `${window.location.origin}${window.location.pathname}?view=${appState.binId}` : null;
+            const shareSection = viewerLink
+                ? `<div class="participant-input-group"><label>Viewer Link (send to colleagues)</label><input type="text" value="${viewerLink}" readonly id="viewerLinkInput" /></div>
+                   <button class="secondary" onclick="copyViewerLink()" style="width: 100%;">Copy Viewer Link</button>
+                   <button onclick="manualPublish()" style="width: 100%; margin-top: 0.75rem;">📤 Re-publish Latest</button>`
+                : `<p class="info-text" style="margin-bottom:0.75rem;">No viewer link yet. Add your jsonbin.io key below, then click "Publish Now".</p>
+                   <button onclick="manualPublish()" style="width: 100%;">📤 Publish Now</button>`;
             modal.querySelector('.modal-content').innerHTML = `
                 <h2 class="modal-title">Settings</h2>
                 <div class="settings-group">
-                    <h3>API Configuration</h3>
-                    <div class="participant-input-group">
-                        <label for="settingsApiKey">Anthropic API Key</label>
-                        <input type="password" id="settingsApiKey" value="${appState.apiKey || ''}" />
-                    </div>
-                    <button onclick="saveApiKey()" style="width: 100%; margin-top: 1rem;">Save API Key</button>
+                    <h3>Anthropic API Key</h3>
+                    <div class="participant-input-group"><input type="password" id="settingsApiKey" placeholder="sk-ant-..." value="${appState.apiKey || ''}" /></div>
+                    <button onclick="saveApiKey()" style="width: 100%;">Save API Key</button>
+                </div>
+                <div class="settings-group">
+                    <h3>jsonbin.io Key (for sharing with viewers)</h3>
+                    <p class="info-text" style="margin-bottom: 0.75rem;">Free key from <a class="help-link" href="https://jsonbin.io" target="_blank">jsonbin.io</a> → sign up → API Keys → copy your Master Key.</p>
+                    <div class="participant-input-group"><input type="password" id="settingsJsonbinKey" placeholder="$2a$10$..." value="${appState.jsonbinKey || ''}" /></div>
+                    <button onclick="saveJsonbinKey()" style="width: 100%;">Save jsonbin Key</button>
                 </div>
                 <div class="settings-group">
                     <h3>Share with Viewers</h3>
-                    ${viewerSection}
-                    ${viewerLink ? '<button onclick="manualPublish()" style="width: 100%; margin-top: 0.75rem;">📤 Re-publish Latest</button>' : ''}
+                    ${shareSection}
                 </div>
                 <div class="settings-group">
                     <h3>Data Management</h3>
                     <button class="secondary" onclick="resetSweepstake()" style="width: 100%;">Reset Sweepstake</button>
                 </div>
-                <button onclick="closeSettings()" style="width: 100%; margin-top: 2rem;">Close</button>
-            `;
+                <button onclick="closeSettings()" style="width: 100%; margin-top: 1rem;">Close</button>`;
             modal.classList.add('active');
         }
 
@@ -1284,23 +843,16 @@
             showToast('✓ Viewer link copied');
         }
 
-        function closeSettings() {
-            document.getElementById('settingsModal').classList.remove('active');
-        }
+        function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 
         function saveApiKey() {
             const key = document.getElementById('settingsApiKey').value.trim();
-            if (key) {
-                appState.apiKey = key;
-                localStorage.setItem('wc2026_apiKey', key);
-                showToast('✓ API key saved');
-                closeSettings();
-            }
+            if (key) { appState.apiKey = key; localStorage.setItem('wc2026_apiKey', key); showToast('✓ API key saved'); }
         }
 
-        function copyShareCode() {
-            navigator.clipboard.writeText(appState.shareCode);
-            showToast('✓ Share code copied');
+        function saveJsonbinKey() {
+            const key = document.getElementById('settingsJsonbinKey').value.trim();
+            if (key) { appState.jsonbinKey = key; localStorage.setItem('wc2026_jsonbinKey', key); showToast('✓ jsonbin key saved'); }
         }
 
         function resetSweepstake() {
@@ -1320,7 +872,7 @@
             toast.className = 'toast';
             toast.textContent = message;
             document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            setTimeout(() => toast.remove(), 3500);
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
