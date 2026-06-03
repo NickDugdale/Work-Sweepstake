@@ -220,6 +220,36 @@
 
         const JSONBIN_BASE = 'https://api.jsonbin.io/v3/b';
 
+        // Parse JSON that may have been truncated by the token limit.
+        function parseLooseJson(text) {
+            const start = text.indexOf('{');
+            if (start === -1) throw new Error('No JSON found in response');
+            const c = text.slice(start);
+            try { return JSON.parse(c); } catch (_) {}
+            // Salvage: trim to the last fully-closed array element, then close open brackets.
+            const stack = []; let inStr = false, esc = false, lastComplete = -1;
+            for (let i = 0; i < c.length; i++) {
+                const ch = c[i];
+                if (inStr) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === '"') inStr = false; continue; }
+                if (ch === '"') inStr = true;
+                else if (ch === '{') stack.push('}');
+                else if (ch === '[') stack.push(']');
+                else if (ch === '}' || ch === ']') { stack.pop(); if (stack.length >= 1) lastComplete = i; }
+            }
+            if (lastComplete > 0) {
+                let trimmed = c.slice(0, lastComplete + 1);
+                const st = []; let s = false, e = false;
+                for (const ch of trimmed) {
+                    if (s) { if (e) e = false; else if (ch === '\\') e = true; else if (ch === '"') s = false; continue; }
+                    if (ch === '"') s = true; else if (ch === '{') st.push('}'); else if (ch === '[') st.push(']'); else if (ch === '}' || ch === ']') st.pop();
+                }
+                let closers = '';
+                for (let i = st.length - 1; i >= 0; i--) closers += st[i];
+                try { return JSON.parse(trimmed + closers); } catch (_) {}
+            }
+            throw new Error('Response was truncated — tap Sync again');
+        }
+
         let appState = {
             participants: ['Andy', 'Ajit', 'Ian', 'Lisa', 'Alison', 'Paul', 'George', 'Nick'],
             teamAssignments: {},
@@ -700,16 +730,16 @@
                 headers: { 'Content-Type': 'application/json', 'x-api-key': appState.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-6',
-                    max_tokens: 1500,
-                    system: 'You provide World Cup 2026 football data using web search. Return ONLY valid JSON, no markdown.',
+                    max_tokens: 4096,
+                    system: 'You provide World Cup 2026 football data using web search. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
                         content: `Using web search, find current World Cup 2026 data. Only use these national team names: ${teamList}.
-Provide three lists:
-1. "results": COMPLETED official World Cup 2026 tournament matches with final scores (empty array if the tournament hasn't started).
-2. "upcoming": the next scheduled World Cup 2026 fixtures (no scores), include a short "kickoff" date/time string if known.
-3. "friendlies": recent international warm-up/friendly results involving these teams (with scores).
-Return ONLY this JSON:
+Provide three lists, keeping each "quip" under 12 words:
+1. "results": COMPLETED official World Cup 2026 tournament matches with final scores (max 10; empty array if the tournament hasn't started).
+2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8), include a short "kickoff" date/time string if known.
+3. "friendlies": recent international warm-up/friendly results involving these teams, with scores (max 6).
+Output ONLY this JSON (no other text):
 {
   "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "quip": "one line" } ],
   "upcoming": [ { "match_id": "u_id", "home_team": "Team", "away_team": "Team", "stage": "group", "kickoff": "Jun 11, 8pm", "quip": "one line" } ],
@@ -728,9 +758,7 @@ Return ONLY this JSON:
             const data = await response.json();
             const textBlock = data.content.find(c => c.type === 'text');
             if (!textBlock) return { results: [], upcoming: [], friendlies: [] };
-            const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) return { results: [], upcoming: [], friendlies: [] };
-            const parsed = JSON.parse(jsonMatch[0]);
+            const parsed = parseLooseJson(textBlock.text);
             parsed.results = parsed.results || [];
             parsed.upcoming = parsed.upcoming || [];
             parsed.friendlies = parsed.friendlies || [];
@@ -744,9 +772,9 @@ Return ONLY this JSON:
                     headers: { 'Content-Type': 'application/json', 'x-api-key': appState.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
                     body: JSON.stringify({
                         model: 'claude-sonnet-4-6',
-                        max_tokens: 768,
-                        system: 'You provide real World Cup 2026 news using web search. Return ONLY valid JSON, no markdown.',
-                        messages: [{ role: 'user', content: `Find 3 latest real World Cup 2026 news items (squad announcements, injuries, predictions, headlines). Return ONLY this JSON:
+                        max_tokens: 1024,
+                        system: 'You provide real World Cup 2026 news using web search. Output ONLY valid JSON, no preamble, no markdown.',
+                        messages: [{ role: 'user', content: `Find 3 latest real World Cup 2026 news items (squad announcements, injuries, predictions, headlines). Output ONLY this JSON:
 { "news": [ { "id": "unique_id", "headline": "Headline", "summary": "One sentence", "timestamp": "${new Date().toISOString()}" } ] }` }],
                         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
                     })
@@ -755,9 +783,7 @@ Return ONLY this JSON:
                 const data = await response.json();
                 const textBlock = data.content.find(c => c.type === 'text');
                 if (!textBlock) return [];
-                const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
-                if (!jsonMatch) return [];
-                return JSON.parse(jsonMatch[0]).news || [];
+                return parseLooseJson(textBlock.text).news || [];
             } catch (e) { console.error('News error:', e); return []; }
         }
 
