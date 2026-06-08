@@ -319,6 +319,13 @@
             let shared = 0; a.codes.forEach(c => { if (b.codes.has(c)) shared++; });
             return shared >= 2;
         }
+        function sortNewsByDate(list) {
+            return (list || []).slice().sort((a, b) => {
+                const ta = Date.parse(a && a.timestamp) || 0;
+                const tb = Date.parse(b && b.timestamp) || 0;
+                return tb - ta;
+            });
+        }
 
         const SCORING = { groupWin: 3, draw: 1, ro32: 5, ro16: 10, qf: 15, sf: 20, runnerUp: 20, winner: 50, topScorer: 10 };
         const STAGE_LABELS = { group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-final', sf: 'Semi-final', final: 'Final' };
@@ -475,7 +482,7 @@
             appState.results = cleanScored(appState.results);
             appState.friendlies = cleanScored(appState.friendlies);
             appState.upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
-            appState.news = dedupeNews(appState.news || []);
+            appState.news = sortNewsByDate(dedupeNews(appState.news || [])).slice(0, 30);
             const apiKey = localStorage.getItem('wc2026_apiKey');
             if (apiKey) appState.apiKey = apiKey;
             const jbKey = localStorage.getItem('wc2026_jsonbinKey');
@@ -773,16 +780,40 @@
             feed.innerHTML = friendlies.slice(-8).reverse().map(m => matchCardHtml(m, { warmup: true })).join('');
         }
 
+        function newsItemHtml(item) {
+            return `<div class="news-item"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary || ''}</div><div class="news-time">${item.timestamp ? new Date(item.timestamp).toLocaleDateString() : ''}</div></div>`;
+        }
+
         function renderNews() {
             const newsCard = document.getElementById('newsCard');
             const newsFeed = document.getElementById('newsFeed');
-            const movement = appState.movementNews || [];
-            const news = dedupeNews(appState.news || []);
+            const movement = (appState.movementNews || []).slice(0, 4);
+            const news = sortNewsByDate(dedupeNews(appState.news || []));
             if (movement.length === 0 && news.length === 0) { newsCard.style.display = 'none'; return; }
             newsCard.style.display = 'block';
-            const mHtml = movement.slice(0, 4).map(item => `<div class="news-item movement"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleString()}</div></div>`).join('');
-            const nHtml = news.slice(0, 6).map(item => `<div class="news-item"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleDateString()}</div></div>`).join('');
-            newsFeed.innerHTML = mHtml + nHtml;
+
+            const mHtml = movement.map(item => `<div class="news-item movement"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleString()}</div></div>`).join('');
+
+            const LATEST = 5;
+            const latest = news.slice(0, LATEST);
+            const archive = news.slice(LATEST);
+            const latestHtml = latest.map(newsItemHtml).join('');
+            const archiveHtml = archive.length
+                ? `<div style="margin-top:1rem;">
+                       <button class="secondary" id="archiveToggle" onclick="toggleArchive()" style="width:100%;">📁 Earlier news (${archive.length})</button>
+                       <div id="newsArchive" style="display:none; margin-top:1rem;">${archive.map(newsItemHtml).join('')}</div>
+                   </div>`
+                : '';
+            newsFeed.innerHTML = mHtml + latestHtml + archiveHtml;
+        }
+
+        function toggleArchive() {
+            const el = document.getElementById('newsArchive');
+            const btn = document.getElementById('archiveToggle');
+            if (!el) return;
+            const open = el.style.display !== 'none';
+            el.style.display = open ? 'none' : 'block';
+            if (btn) btn.textContent = (open ? '📁 Earlier news' : '📂 Hide earlier news') + (open ? ` (${el.children.length})` : '');
         }
 
         async function syncData() {
@@ -806,7 +837,7 @@
                     appState.upcoming = (matchData.upcoming || []).filter(m => m && m.home_team && m.away_team);
                 }
                 if (matchData.top_scorer_team) appState.topScorerTeam = matchData.top_scorer_team;
-                if (newsData.length) appState.news = dedupeNews([...newsData, ...appState.news]).slice(0, 8);
+                if (newsData.length) appState.news = sortNewsByDate(dedupeNews([...newsData, ...appState.news])).slice(0, 30);
 
                 const ranksAfter = computeRanks();
                 const moves = detectMovement(ranksBefore, ranksAfter);
@@ -915,11 +946,11 @@
                     system: 'You provide World Cup 2026 football data using web search. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
-                        content: `Using web search, find current World Cup 2026 data. Only use these national team names: ${teamList}.
-Provide three lists, keeping each "quip" under 12 words:
-1. "results": COMPLETED official World Cup 2026 tournament matches with final scores (max 10; empty array if the tournament hasn't started).
+                        content: `Today is ${new Date().toDateString()}. Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Keep each "quip" under 12 words.
+Provide three lists:
+1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 10). The tournament starts 11 June 2026 — if it hasn't started, return an empty array. For these, use EXACTLY these team names where applicable: ${teamList}.
 2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8), include a short "kickoff" date/time string if known.
-3. "friendlies": recent international warm-up/friendly results involving these teams, with scores (max 6).
+3. "friendlies": the most recent international warm-up / friendly results involving any of these teams (${teamList}). The opponent may be ANY national team, not just the listed ones. Include the newest games first (max 8), with final scores.
 Output ONLY this JSON (no other text):
 {
   "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "quip": "one line" } ],
@@ -957,7 +988,7 @@ Output ONLY this JSON (no other text):
                         model: 'claude-sonnet-4-6',
                         max_tokens: 1024,
                         system: 'You provide real World Cup 2026 news using web search. Each item must be a distinct story. Output ONLY valid JSON, no preamble, no markdown.',
-                        messages: [{ role: 'user', content: `Find 3 latest, distinct World Cup 2026 news items (squad announcements, injuries, predictions, headlines). Each must be about a different topic.${avoidBlock}
+                        messages: [{ role: 'user', content: `Today is ${new Date().toDateString()}. Using web search, find the 5 most RECENT and distinct World Cup 2026 news stories (squad announcements, injuries, transfers, predictions, headlines), newest first. Prioritise items published in the last few days. Each must be about a different topic.${avoidBlock}
 Output ONLY this JSON:
 { "news": [ { "id": "unique_id", "headline": "Headline", "summary": "One sentence", "timestamp": "${new Date().toISOString()}" } ] }` }],
                         tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
