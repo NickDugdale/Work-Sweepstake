@@ -197,9 +197,8 @@
                 <div class="viewer-banner" id="viewerBanner" style="display: none;"></div>
                 <div class="tab-bar" id="tabBar">
                     <button class="tab active" data-tab="leaderboard" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
-                    <button class="tab" data-tab="groups" onclick="showTab('groups')">📊 Group Tables</button>
-                    <button class="tab" data-tab="results" onclick="showTab('results')">⚽ Results</button>
-                    <button class="tab" data-tab="fixtures" onclick="showTab('fixtures')">📅 Fixtures</button>
+                    <button class="tab" data-tab="results" onclick="showTab('results')">⚽ Match Results</button>
+                    <button class="tab" data-tab="tables" onclick="showTab('tables')">📊 Tables</button>
                     <button class="tab" data-tab="news" onclick="showTab('news')">📰 News</button>
                 </div>
 
@@ -210,34 +209,31 @@
                     </div>
                 </div>
 
-                <div class="tab-panel" data-panel="groups">
-                    <div class="card" id="groupsCard">
-                        <h2>Group Stage</h2>
-                        <div id="groupsFeed"></div>
-                    </div>
-                </div>
-
                 <div class="tab-panel" data-panel="results">
                     <div class="card">
                         <h2>Tournament Results</h2>
                         <div id="resultsFeed"></div>
                     </div>
-                    <div class="card" id="friendliesCard" style="display: none;">
-                        <h2>Warm-up Friendlies <span style="font-size:0.8rem; color:#9FC5DC; font-weight:400;">(do not count toward points)</span></h2>
-                        <div id="friendliesFeed"></div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" data-panel="fixtures">
                     <div class="card">
                         <h2>Upcoming Matches</h2>
                         <div id="upcomingFeed"></div>
                     </div>
                 </div>
 
+                <div class="tab-panel" data-panel="tables">
+                    <div class="card" id="groupsCard">
+                        <h2>Group Stage</h2>
+                        <div id="groupsFeed"></div>
+                    </div>
+                </div>
+
                 <div class="tab-panel" data-panel="news">
+                    <div class="card">
+                        <h2>📈 Sweepstake Updates</h2>
+                        <div id="movementFeed"></div>
+                    </div>
                     <div class="card" id="newsCard">
-                        <h2>World Cup News</h2>
+                        <h2>🌍 World Cup Headlines</h2>
                         <div id="newsFeed"></div>
                     </div>
                 </div>
@@ -750,8 +746,32 @@
             renderResults();
             renderGroups();
             renderUpcoming();
-            renderFriendlies();
             renderNews();
+        }
+
+        // Build a code -> group letter map from the standings, to verify real group matches.
+        function teamGroupMap() {
+            const map = {};
+            (appState.groups || []).forEach(g => (g.standings || []).forEach(s => {
+                const c = flagCodeFor(s.team);
+                if (c) map[c] = String(g.group);
+            }));
+            return map;
+        }
+        function groupsLookComplete(map) { return Object.keys(map).length >= 40; }
+        // A result counts only if it's a knockout match, or a group match between two teams
+        // that are actually in the same World Cup group (filters out stale warm-up friendlies).
+        function isRealTournamentResult(m, map) {
+            const stage = (m.stage || 'group').toLowerCase();
+            if (stage !== 'group') return true;
+            if (!groupsLookComplete(map)) return true; // can't verify yet — don't exclude
+            const a = flagCodeFor(m.home_team), b = flagCodeFor(m.away_team);
+            if (!a || !b) return false;
+            return map[a] && map[b] && map[a] === map[b];
+        }
+        function countableResults() {
+            const map = teamGroupMap();
+            return cleanScored(appState.results).filter(m => isRealTournamentResult(m, map));
         }
 
         function renderLeaderboard() {
@@ -796,7 +816,7 @@
                 scores[p] = { total: 0, breakdown: {} };
                 (appState.teamAssignments[p] || []).forEach(t => { scores[p].breakdown[t] = 0; });
             });
-            (appState.results || []).forEach(match => {
+            (countableResults()).forEach(match => {
                 for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
                     [match.home_team, match.away_team].forEach(teamName => {
                         if (!teams.includes(teamName)) return;
@@ -856,12 +876,12 @@
 
         function renderResults() {
             const feed = document.getElementById('resultsFeed');
-            const results = cleanScored(appState.results);
+            const results = countableResults();
             if (results.length === 0) {
-                feed.innerHTML = '<p class="empty-note">🏟️ No tournament results yet — the World Cup kicks off 11 June 2026. Completed matches and points will appear here once games are played.</p>';
+                feed.innerHTML = '<p class="empty-note">🏟️ No tournament results yet. Completed group and knockout matches will appear here and move the leaderboard.</p>';
                 return;
             }
-            feed.innerHTML = results.slice(-12).reverse().map(m => matchCardHtml(m, {})).join('');
+            feed.innerHTML = results.slice(-15).reverse().map(m => matchCardHtml(m, {})).join('');
         }
 
         function renderGroups() {
@@ -908,32 +928,24 @@
             feed.innerHTML = upcoming.slice(0, 12).map(m => matchCardHtml(m, { upcoming: true })).join('');
         }
 
-        function renderFriendlies() {
-            const card = document.getElementById('friendliesCard');
-            const feed = document.getElementById('friendliesFeed');
-            const friendlies = cleanScored(appState.friendlies);
-            if (friendlies.length === 0) { card.style.display = 'none'; return; }
-            card.style.display = 'block';
-            feed.innerHTML = friendlies.slice(-8).reverse().map(m => matchCardHtml(m, { warmup: true })).join('');
-        }
-
         function newsItemHtml(item) {
             return `<div class="news-item"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary || ''}</div><div class="news-time">${item.timestamp ? new Date(item.timestamp).toLocaleDateString() : ''}</div></div>`;
         }
 
         function renderNews() {
-            const newsCard = document.getElementById('newsCard');
+            const movementFeed = document.getElementById('movementFeed');
             const newsFeed = document.getElementById('newsFeed');
-            const movement = (appState.movementNews || []).slice(0, 4);
+            const movement = (appState.movementNews || []).slice(0, 6);
             const news = sortNewsByDate(dedupeNews(appState.news || []));
-            newsCard.style.display = 'block';
-            if (movement.length === 0 && news.length === 0) {
-                newsFeed.innerHTML = '<p class="empty-note">No news yet. Click "Sync Latest" to pull the latest World Cup headlines.</p>';
+
+            movementFeed.innerHTML = movement.length
+                ? movement.map(item => `<div class="news-item movement"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleString()}</div></div>`).join('')
+                : '<p class="empty-note">No leaderboard changes yet. As results come in, overtakes and rank moves show here.</p>';
+
+            if (news.length === 0) {
+                newsFeed.innerHTML = '<p class="empty-note">No headlines yet. Click "Sync Latest" to pull the latest World Cup news.</p>';
                 return;
             }
-
-            const mHtml = movement.map(item => `<div class="news-item movement"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleString()}</div></div>`).join('');
-
             const LATEST = 5;
             const latest = news.slice(0, LATEST);
             const archive = news.slice(LATEST);
@@ -944,7 +956,7 @@
                        <div id="newsArchive" style="display:none; margin-top:1rem;">${archive.map(newsItemHtml).join('')}</div>
                    </div>`
                 : '';
-            newsFeed.innerHTML = mHtml + latestHtml + archiveHtml;
+            newsFeed.innerHTML = latestHtml + archiveHtml;
         }
 
         function toggleArchive() {
@@ -969,9 +981,6 @@
 
                 if (matchData.results && matchData.results.length) {
                     appState.results = dedupeGames([...appState.results, ...reconcileList(cleanScored(matchData.results))], 'result');
-                }
-                if (matchData.friendlies && matchData.friendlies.length) {
-                    appState.friendlies = dedupeGames([...appState.friendlies, ...reconcileList(cleanScored(matchData.friendlies))], 'friendly');
                 }
                 if (matchData.upcoming && matchData.upcoming.length) {
                     appState.upcoming = (matchData.upcoming || []).filter(m => m && m.home_team && m.away_team);
@@ -1048,11 +1057,11 @@
             return moves;
         }
 
-        async function publishToViewers() {
+        async function publishToViewers(isRetry) {
             if (!appState.jsonbinKey) { showToast('⚠️ Add a jsonbin.io key in Settings to share with viewers'); return false; }
             const payload = {
                 participants: appState.participants, teamAssignments: appState.teamAssignments,
-                results: appState.results, upcoming: appState.upcoming, friendlies: appState.friendlies,
+                results: appState.results, upcoming: appState.upcoming,
                 groups: appState.groups,
                 news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam || null,
                 previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
@@ -1081,6 +1090,10 @@
                 }
             } catch (e) {
                 console.error('Publish error:', e);
+                if (!isRetry) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    return publishToViewers(true);
+                }
                 showToast('⚠️ Publish failed: ' + e.message);
                 return false;
             }
@@ -1106,16 +1119,14 @@
                     messages: [{
                         role: 'user',
                         content: `Today is ${new Date().toDateString()}. Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Only include matches that have genuinely finished — do not include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
-Provide four lists:
-1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 10). The tournament starts 11 June 2026 — if it hasn't started, return an empty array. For these, use EXACTLY these team names where applicable: ${teamList}.
+Provide three lists:
+1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 12). Only real group-stage or knockout fixtures — NOT warm-up friendlies. The tournament starts 11 June 2026 — if it hasn't started, return an empty array. Use EXACTLY these team names where applicable: ${teamList}.
 2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8), include a short "kickoff" date/time string if known.
-3. "friendlies": the most recent international warm-up / friendly results involving any of these teams (${teamList}). The opponent may be ANY national team. Newest first (max 8), with final scores.
-4. "groups": the 12 World Cup 2026 group-stage tables (groups A to L, 4 teams each). For each team give played, won, drawn, lost, goal difference (gd) and points. Before the tournament starts these are all zero but still list the correct teams in each group. Use the exact team names from the list above.
+3. "groups": the 12 World Cup 2026 group-stage tables (groups A to L, 4 teams each). For each team give played, won, drawn, lost, goal difference (gd) and points. Use the exact team names from the list above.
 Output ONLY this JSON (no other text):
 {
   "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "quip": "one line" } ],
   "upcoming": [ { "match_id": "u_id", "home_team": "Team", "away_team": "Team", "stage": "group", "kickoff": "Jun 11, 8pm", "quip": "one line" } ],
-  "friendlies": [ { "match_id": "f_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "quip": "one line" } ],
   "groups": [ { "group": "A", "standings": [ { "team": "Team", "played": 0, "won": 0, "drawn": 0, "lost": 0, "gd": 0, "points": 0 } ] } ],
   "top_scorer_team": null
 }`
