@@ -87,6 +87,18 @@
         .viewer-banner { background: rgba(79, 195, 247, 0.1); border: 1px solid rgba(79, 195, 247, 0.25); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #7DB8D8; }
         .viewer-banner strong { color: #4FC3F7; }
         .empty-note { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
+        .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+        .group-table { background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 12px; padding: 1rem 1.25rem; }
+        .group-title { font-family: 'Outfit', sans-serif; font-weight: 600; color: #4FC3F7; margin-bottom: 0.75rem; font-size: 1rem; }
+        .group-table table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .group-table th { text-align: center; color: #7DB8D8; font-weight: 600; padding: 0.3rem 0.2rem; border-bottom: 1px solid rgba(79,195,247,0.15); font-size: 0.72rem; }
+        .group-table th.team-col, .group-table td.team-col { text-align: left; }
+        .group-table td { text-align: center; padding: 0.4rem 0.2rem; border-bottom: 1px solid rgba(79,195,247,0.06); }
+        .group-table tr:last-child td { border-bottom: none; }
+        .group-table td.team-col { display: flex; align-items: center; gap: 0.5rem; }
+        .group-table td.team-col img { width: 22px; height: 15px; object-fit: cover; border-radius: 2px; }
+        .group-table .pts { color: #4FC3F7; font-weight: 700; }
+        .group-table tr.qualify td { background: rgba(79,195,247,0.06); }
         .settings-group { margin-bottom: 2rem; }
         .settings-group h3 { font-family: 'Outfit', sans-serif; font-size: 1rem; margin-bottom: 1rem; color: #4FC3F7; }
         .info-text { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
@@ -183,6 +195,10 @@
                 <div class="card">
                     <h2>Tournament Results</h2>
                     <div id="resultsFeed"></div>
+                </div>
+                <div class="card" id="groupsCard" style="display: none;">
+                    <h2>Group Stage</h2>
+                    <div id="groupsFeed"></div>
                 </div>
                 <div class="card">
                     <h2>Upcoming Matches</h2>
@@ -327,6 +343,52 @@
             });
         }
 
+        // Display names used to reconcile mislabeled team fields against the quip text.
+        const NATIONS = [
+            'USA','Mexico','Canada','England','France','Germany','Spain','Italy','Netherlands','Portugal',
+            'Belgium','Switzerland','Austria','Czechia','Poland','Ukraine','Serbia','Croatia','Denmark','Sweden',
+            'Norway','Finland','Iceland','Argentina','Brazil','Uruguay','Colombia','Chile','Ecuador','Peru',
+            'Paraguay','Venezuela','Bolivia','Costa Rica','Panama','Honduras','Jamaica','El Salvador','Guatemala',
+            'Trinidad and Tobago','Curacao','Suriname','Haiti','Japan','South Korea','North Korea','Iran',
+            'Saudi Arabia','Australia','New Zealand','Qatar','Iraq','United Arab Emirates','Jordan','Oman',
+            'China','India','Indonesia','Vietnam','Thailand','Malaysia','Uzbekistan','Morocco','Egypt','Nigeria',
+            'Senegal','Cameroon','Ghana','Tunisia','Algeria','South Africa','Ivory Coast','Mali','Burkina Faso',
+            'Guinea','DR Congo','Gabon','Zambia','Kenya','Angola','Cape Verde','Equatorial Guinea','Benin','Togo',
+            'Turkey','Greece','Russia','Hungary','Romania','Slovakia','Slovenia','Bulgaria','Republic of Ireland',
+            'Albania','North Macedonia','Montenegro','Kosovo','Georgia','Armenia','Israel','Bosnia and Herzegovina'
+        ];
+        function nationsInText(text) {
+            let pad = ' ' + normName(text) + ' ';
+            const matches = [];
+            [...NATIONS].sort((a, b) => normName(b).length - normName(a).length).forEach(n => {
+                const key = ' ' + normName(n) + ' ';
+                if (pad.includes(key)) { matches.push(n); pad = pad.replace(key, '  '); }
+            });
+            return matches;
+        }
+        function reconcileMatch(m) {
+            if (!m || !m.quip || typeof m.home_score !== 'number') return m;
+            const sm = m.quip.match(/(\d+)\s*[-\u2013]\s*(\d+)/);
+            if (!sm) return m;
+            const qScore = [parseInt(sm[1]), parseInt(sm[2])].sort((a, b) => a - b).join('-');
+            const mScore = [m.home_score, m.away_score].sort((a, b) => a - b).join('-');
+            if (qScore !== mScore) return m; // quip isn't clearly about this scoreline
+            const found = nationsInText(m.quip);
+            if (found.length !== 2) return m;
+            const code = n => flagCodeFor(n);
+            const homeOk = found.some(n => code(n) === code(m.home_team));
+            const awayOk = found.some(n => code(n) === code(m.away_team));
+            if (homeOk && !awayOk) {
+                const other = found.find(n => code(n) !== code(m.home_team));
+                if (other) return { ...m, away_team: other };
+            } else if (awayOk && !homeOk) {
+                const other = found.find(n => code(n) !== code(m.away_team));
+                if (other) return { ...m, home_team: other };
+            }
+            return m;
+        }
+        function reconcileList(arr) { return (arr || []).map(reconcileMatch); }
+
         const SCORING = { groupWin: 3, draw: 1, ro32: 5, ro16: 10, qf: 15, sf: 20, runnerUp: 20, winner: 50, topScorer: 10 };
         const STAGE_LABELS = { group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-final', sf: 'Semi-final', final: 'Final' };
 
@@ -409,6 +471,7 @@
             results: [],
             upcoming: [],
             friendlies: [],
+            groups: [],
             news: [],
             movementNews: [],
             topScorerTeam: null,
@@ -479,8 +542,8 @@
         function loadFromLocalStorage() {
             const stored = localStorage.getItem('wc2026_state');
             if (stored) { appState = { ...appState, ...JSON.parse(stored) }; }
-            appState.results = cleanScored(appState.results);
-            appState.friendlies = cleanScored(appState.friendlies);
+            appState.results = reconcileList(cleanScored(appState.results));
+            appState.friendlies = reconcileList(cleanScored(appState.friendlies));
             appState.upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
             appState.news = sortNewsByDate(dedupeNews(appState.news || [])).slice(0, 30);
             const apiKey = localStorage.getItem('wc2026_apiKey');
@@ -497,6 +560,7 @@
             localStorage.setItem('wc2026_state', JSON.stringify({
                 participants: appState.participants, teamAssignments: appState.teamAssignments,
                 results: appState.results, upcoming: appState.upcoming, friendlies: appState.friendlies,
+                groups: appState.groups,
                 news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam,
                 binId: appState.binId, setupComplete: appState.setupComplete,
                 previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
@@ -646,6 +710,7 @@
         function updateDashboard() {
             renderLeaderboard();
             renderResults();
+            renderGroups();
             renderUpcoming();
             renderFriendlies();
             renderNews();
@@ -761,6 +826,37 @@
             feed.innerHTML = results.slice(-12).reverse().map(m => matchCardHtml(m, {})).join('');
         }
 
+        function renderGroups() {
+            const card = document.getElementById('groupsCard');
+            const feed = document.getElementById('groupsFeed');
+            const groups = (appState.groups || []).filter(g => g && g.group && Array.isArray(g.standings) && g.standings.length);
+            if (groups.length === 0) { card.style.display = 'none'; return; }
+            card.style.display = 'block';
+            const sorted = groups.slice().sort((a, b) => String(a.group).localeCompare(String(b.group)));
+            feed.innerHTML = '<div class="groups-grid">' + sorted.map(g => {
+                const rows = g.standings.slice().sort((a, b) => {
+                    const pa = a.points || 0, pb = b.points || 0;
+                    if (pb !== pa) return pb - pa;
+                    return (b.gd || 0) - (a.gd || 0);
+                });
+                const body = rows.map((t, i) => {
+                    const gd = (t.gd > 0 ? '+' : '') + (t.gd || 0);
+                    return `<tr class="${i < 2 ? 'qualify' : ''}">
+                        <td class="team-col">${flagImg(t.team, '', 'w40')}<span>${t.team || ''}</span></td>
+                        <td>${t.played || 0}</td><td>${t.won || 0}</td><td>${t.drawn || 0}</td><td>${t.lost || 0}</td>
+                        <td>${gd}</td><td class="pts">${t.points || 0}</td>
+                    </tr>`;
+                }).join('');
+                return `<div class="group-table">
+                    <div class="group-title">Group ${g.group}</div>
+                    <table>
+                        <thead><tr><th class="team-col">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
+                        <tbody>${body}</tbody>
+                    </table>
+                </div>`;
+            }).join('') + '</div>';
+        }
+
         function renderUpcoming() {
             const feed = document.getElementById('upcomingFeed');
             const upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
@@ -828,13 +924,16 @@
                 const newsData = await fetchNews();
 
                 if (matchData.results && matchData.results.length) {
-                    appState.results = mergeById(appState.results, cleanScored(matchData.results));
+                    appState.results = mergeById(appState.results, reconcileList(cleanScored(matchData.results)));
                 }
                 if (matchData.friendlies && matchData.friendlies.length) {
-                    appState.friendlies = mergeById(appState.friendlies, cleanScored(matchData.friendlies));
+                    appState.friendlies = mergeById(appState.friendlies, reconcileList(cleanScored(matchData.friendlies)));
                 }
                 if (matchData.upcoming && matchData.upcoming.length) {
                     appState.upcoming = (matchData.upcoming || []).filter(m => m && m.home_team && m.away_team);
+                }
+                if (matchData.groups && matchData.groups.length) {
+                    appState.groups = matchData.groups.filter(g => g && g.group && Array.isArray(g.standings));
                 }
                 if (matchData.top_scorer_team) appState.topScorerTeam = matchData.top_scorer_team;
                 if (newsData.length) appState.news = sortNewsByDate(dedupeNews([...newsData, ...appState.news])).slice(0, 30);
@@ -895,6 +994,7 @@
             const payload = {
                 participants: appState.participants, teamAssignments: appState.teamAssignments,
                 results: appState.results, upcoming: appState.upcoming, friendlies: appState.friendlies,
+                groups: appState.groups,
                 news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam || null,
                 previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
             };
@@ -942,20 +1042,22 @@
                 headers: { 'Content-Type': 'application/json', 'x-api-key': appState.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-6',
-                    max_tokens: 4096,
-                    system: 'You provide World Cup 2026 football data using web search. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
+                    max_tokens: 6144,
+                    system: 'You provide World Cup 2026 football data using web search. Be accurate: ensure each match\'s home_team and away_team exactly match the real teams that played and agree with the quip. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
-                        content: `Today is ${new Date().toDateString()}. Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Keep each "quip" under 12 words.
-Provide three lists:
+                        content: `Today is ${new Date().toDateString()}. Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team.
+Provide four lists:
 1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 10). The tournament starts 11 June 2026 — if it hasn't started, return an empty array. For these, use EXACTLY these team names where applicable: ${teamList}.
 2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8), include a short "kickoff" date/time string if known.
-3. "friendlies": the most recent international warm-up / friendly results involving any of these teams (${teamList}). The opponent may be ANY national team, not just the listed ones. Include the newest games first (max 8), with final scores.
+3. "friendlies": the most recent international warm-up / friendly results involving any of these teams (${teamList}). The opponent may be ANY national team. Newest first (max 8), with final scores.
+4. "groups": the 12 World Cup 2026 group-stage tables (groups A to L, 4 teams each). For each team give played, won, drawn, lost, goal difference (gd) and points. Before the tournament starts these are all zero but still list the correct teams in each group. Use the exact team names from the list above.
 Output ONLY this JSON (no other text):
 {
   "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "quip": "one line" } ],
   "upcoming": [ { "match_id": "u_id", "home_team": "Team", "away_team": "Team", "stage": "group", "kickoff": "Jun 11, 8pm", "quip": "one line" } ],
   "friendlies": [ { "match_id": "f_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "quip": "one line" } ],
+  "groups": [ { "group": "A", "standings": [ { "team": "Team", "played": 0, "won": 0, "drawn": 0, "lost": 0, "gd": 0, "points": 0 } ] } ],
   "top_scorer_team": null
 }`
                     }],
@@ -969,11 +1071,12 @@ Output ONLY this JSON (no other text):
             }
             const data = await response.json();
             const textBlock = data.content.find(c => c.type === 'text');
-            if (!textBlock) return { results: [], upcoming: [], friendlies: [] };
+            if (!textBlock) return { results: [], upcoming: [], friendlies: [], groups: [] };
             const parsed = parseLooseJson(textBlock.text);
             parsed.results = parsed.results || [];
             parsed.upcoming = parsed.upcoming || [];
             parsed.friendlies = parsed.friendlies || [];
+            parsed.groups = parsed.groups || [];
             return parsed;
         }
 
