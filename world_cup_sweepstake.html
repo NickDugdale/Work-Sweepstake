@@ -542,8 +542,8 @@
         function loadFromLocalStorage() {
             const stored = localStorage.getItem('wc2026_state');
             if (stored) { appState = { ...appState, ...JSON.parse(stored) }; }
-            appState.results = reconcileList(cleanScored(appState.results));
-            appState.friendlies = reconcileList(cleanScored(appState.friendlies));
+            appState.results = dedupeGames(reconcileList(cleanScored(appState.results)), 'result');
+            appState.friendlies = dedupeGames(reconcileList(cleanScored(appState.friendlies)), 'friendly');
             appState.upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
             appState.news = sortNewsByDate(dedupeNews(appState.news || [])).slice(0, 30);
             const apiKey = localStorage.getItem('wc2026_apiKey');
@@ -924,10 +924,10 @@
                 const newsData = await fetchNews();
 
                 if (matchData.results && matchData.results.length) {
-                    appState.results = mergeById(appState.results, reconcileList(cleanScored(matchData.results)));
+                    appState.results = dedupeGames([...appState.results, ...reconcileList(cleanScored(matchData.results))], 'result');
                 }
                 if (matchData.friendlies && matchData.friendlies.length) {
-                    appState.friendlies = mergeById(appState.friendlies, reconcileList(cleanScored(matchData.friendlies)));
+                    appState.friendlies = dedupeGames([...appState.friendlies, ...reconcileList(cleanScored(matchData.friendlies))], 'friendly');
                 }
                 if (matchData.upcoming && matchData.upcoming.length) {
                     appState.upcoming = (matchData.upcoming || []).filter(m => m && m.home_team && m.away_team);
@@ -963,6 +963,21 @@
             const out = [...existing];
             incoming.forEach(m => { if (!out.some(e => e.match_id === m.match_id)) out.push(m); });
             return out;
+        }
+
+        // Signature that identifies a real match regardless of the API's generated id,
+        // so the same game synced twice (with different ids) isn't counted twice.
+        function gameSig(m, kind) {
+            const a = flagCodeFor(m.home_team) || (m.home_team || '').toLowerCase();
+            const b = flagCodeFor(m.away_team) || (m.away_team || '').toLowerCase();
+            const pair = [a, b].sort().join('|');
+            return kind === 'result' ? pair + '|' + (m.stage || 'group') : pair + '|' + m.home_score + '-' + m.away_score;
+        }
+        // Combine existing + incoming, keeping one entry per real match (latest wins).
+        function dedupeGames(list, kind) {
+            const map = new Map();
+            (list || []).forEach(m => { if (m && m.home_team && m.away_team) map.set(gameSig(m, kind), m); });
+            return [...map.values()];
         }
 
         function computeRanks() {
