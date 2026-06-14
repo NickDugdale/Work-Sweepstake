@@ -86,6 +86,13 @@
         .news-item.movement .news-headline { color: #6FD98C; }
         .viewer-banner { background: rgba(79, 195, 247, 0.1); border: 1px solid rgba(79, 195, 247, 0.25); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.9rem; color: #7DB8D8; }
         .viewer-banner strong { color: #4FC3F7; }
+        .tab-bar { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; }
+        .tab { background: rgba(79, 195, 247, 0.08); color: #7DB8D8; border: 1px solid rgba(79, 195, 247, 0.15); padding: 0.6rem 1.1rem; border-radius: 10px; font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 0.9rem; cursor: pointer; white-space: nowrap; transition: all 0.25s ease; flex: 0 0 auto; }
+        .tab:hover { background: rgba(79, 195, 247, 0.15); transform: none; box-shadow: none; }
+        .tab.active { background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%); color: #0B1F33; border-color: transparent; }
+        .tab-panel { display: none; animation: fadeIn 0.25s ease; }
+        .tab-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
         .empty-note { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
         .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
         .group-table { background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 12px; padding: 1rem 1.25rem; }
@@ -188,29 +195,51 @@
         <div class="screen" id="dashboardScreen">
             <div class="screen-content">
                 <div class="viewer-banner" id="viewerBanner" style="display: none;"></div>
-                <div class="card">
-                    <h2>Leaderboard</h2>
-                    <div class="leaderboard" id="leaderboard"></div>
+                <div class="tab-bar" id="tabBar">
+                    <button class="tab active" data-tab="leaderboard" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
+                    <button class="tab" data-tab="groups" onclick="showTab('groups')">📊 Group Tables</button>
+                    <button class="tab" data-tab="results" onclick="showTab('results')">⚽ Results</button>
+                    <button class="tab" data-tab="fixtures" onclick="showTab('fixtures')">📅 Fixtures</button>
+                    <button class="tab" data-tab="news" onclick="showTab('news')">📰 News</button>
                 </div>
-                <div class="card">
-                    <h2>Tournament Results</h2>
-                    <div id="resultsFeed"></div>
+
+                <div class="tab-panel active" data-panel="leaderboard">
+                    <div class="card">
+                        <h2>Leaderboard</h2>
+                        <div class="leaderboard" id="leaderboard"></div>
+                    </div>
                 </div>
-                <div class="card" id="groupsCard" style="display: none;">
-                    <h2>Group Stage</h2>
-                    <div id="groupsFeed"></div>
+
+                <div class="tab-panel" data-panel="groups">
+                    <div class="card" id="groupsCard">
+                        <h2>Group Stage</h2>
+                        <div id="groupsFeed"></div>
+                    </div>
                 </div>
-                <div class="card">
-                    <h2>Upcoming Matches</h2>
-                    <div id="upcomingFeed"></div>
+
+                <div class="tab-panel" data-panel="results">
+                    <div class="card">
+                        <h2>Tournament Results</h2>
+                        <div id="resultsFeed"></div>
+                    </div>
+                    <div class="card" id="friendliesCard" style="display: none;">
+                        <h2>Warm-up Friendlies <span style="font-size:0.8rem; color:#9FC5DC; font-weight:400;">(do not count toward points)</span></h2>
+                        <div id="friendliesFeed"></div>
+                    </div>
                 </div>
-                <div class="card" id="friendliesCard" style="display: none;">
-                    <h2>Warm-up Friendlies <span style="font-size:0.8rem; color:#9FC5DC; font-weight:400;">(do not count toward points)</span></h2>
-                    <div id="friendliesFeed"></div>
+
+                <div class="tab-panel" data-panel="fixtures">
+                    <div class="card">
+                        <h2>Upcoming Matches</h2>
+                        <div id="upcomingFeed"></div>
+                    </div>
                 </div>
-                <div class="card" id="newsCard" style="display: none;">
-                    <h2>World Cup News</h2>
-                    <div id="newsFeed"></div>
+
+                <div class="tab-panel" data-panel="news">
+                    <div class="card" id="newsCard">
+                        <h2>World Cup News</h2>
+                        <div id="newsFeed"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -272,16 +301,25 @@
             'slovakia':'sk','slovenia':'si','bulgaria':'bg','republic of ireland':'ie','ireland':'ie',
             'albania':'al','north macedonia':'mk','macedonia':'mk','montenegro':'me','kosovo':'xk',
             'georgia':'ge','armenia':'am','azerbaijan':'az','israel':'il','bosnia and herzegovina':'ba',
-            'bosnia':'ba','luxembourg':'lu','cyprus':'cy','estonia':'ee','latvia':'lv','lithuania':'lt'
+            'bosnia herzegovina':'ba','bosnia':'ba','luxembourg':'lu','cyprus':'cy','estonia':'ee','latvia':'lv','lithuania':'lt'
         };
         function normName(n) {
-            return (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+            return (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z]+/g, ' ').replace(/\s+/g, ' ').trim();
         }
         function flagCodeFor(name) {
             const t = getTeam(name);
             if (t) return t.code;
-            const code = FLAG_ALIASES[normName(name)];
-            return code || null;
+            const key = normName(name);
+            if (FLAG_ALIASES[key]) return FLAG_ALIASES[key];
+            // Word-based fallback: longest alias phrase that appears as whole words in the name
+            // (handles variants like "Bosnia-Herzegovina" or "USA men's team").
+            const padded = ' ' + key + ' ';
+            let best = null, bestLen = 0;
+            for (const aliasKey in FLAG_ALIASES) {
+                if (aliasKey.length < 4) continue;
+                if (padded.includes(' ' + aliasKey + ' ') && aliasKey.length > bestLen) { best = FLAG_ALIASES[aliasKey]; bestLen = aliasKey.length; }
+            }
+            return best;
         }
         function flagImg(name, sizeClass, size) {
             const code = flagCodeFor(name);
@@ -830,8 +868,11 @@
             const card = document.getElementById('groupsCard');
             const feed = document.getElementById('groupsFeed');
             const groups = (appState.groups || []).filter(g => g && g.group && Array.isArray(g.standings) && g.standings.length);
-            if (groups.length === 0) { card.style.display = 'none'; return; }
             card.style.display = 'block';
+            if (groups.length === 0) {
+                feed.innerHTML = '<p class="empty-note">No group tables loaded yet. Click "Sync Latest" to pull the standings.</p>';
+                return;
+            }
             const sorted = groups.slice().sort((a, b) => String(a.group).localeCompare(String(b.group)));
             feed.innerHTML = '<div class="groups-grid">' + sorted.map(g => {
                 const rows = g.standings.slice().sort((a, b) => {
@@ -885,8 +926,11 @@
             const newsFeed = document.getElementById('newsFeed');
             const movement = (appState.movementNews || []).slice(0, 4);
             const news = sortNewsByDate(dedupeNews(appState.news || []));
-            if (movement.length === 0 && news.length === 0) { newsCard.style.display = 'none'; return; }
             newsCard.style.display = 'block';
+            if (movement.length === 0 && news.length === 0) {
+                newsFeed.innerHTML = '<p class="empty-note">No news yet. Click "Sync Latest" to pull the latest World Cup headlines.</p>';
+                return;
+            }
 
             const mHtml = movement.map(item => `<div class="news-item movement"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleString()}</div></div>`).join('');
 
@@ -1058,10 +1102,10 @@
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-6',
                     max_tokens: 6144,
-                    system: 'You provide World Cup 2026 football data using web search. Be accurate: ensure each match\'s home_team and away_team exactly match the real teams that played and agree with the quip. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
+                    system: 'You provide World Cup 2026 football data using web search. Only report matches that have ACTUALLY been played and finished as of today, with real verified scores from your search — never invent, predict, or guess results or scores. If you cannot verify a match was completed, omit it. Ensure each match\'s home_team and away_team exactly match the real teams that played and agree with the quip. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
-                        content: `Today is ${new Date().toDateString()}. Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team.
+                        content: `Today is ${new Date().toDateString()}. Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Only include matches that have genuinely finished — do not include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
 Provide four lists:
 1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 10). The tournament starts 11 June 2026 — if it hasn't started, return an empty array. For these, use EXACTLY these team names where applicable: ${teamList}.
 2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8), include a short "kickoff" date/time string if known.
@@ -1259,6 +1303,11 @@ Output ONLY this JSON:
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === name));
         }
 
         function showToast(message) {
