@@ -289,7 +289,7 @@
             'morocco':'ma','egypt':'eg','nigeria':'ng','senegal':'sn','cameroon':'cm','ghana':'gh',
             'tunisia':'tn','algeria':'dz','south africa':'za','ivory coast':'ci','cote divoire':'ci',
             'mali':'ml','burkina faso':'bf','guinea':'gn','dr congo':'cd','congo':'cg','gabon':'ga',
-            'zambia':'zm','kenya':'ke','angola':'ao','mozambique':'mz','cape verde':'cv',
+            'zambia':'zm','kenya':'ke','angola':'ao','mozambique':'mz','cape verde':'cv','cabo verde':'cv',
             'equatorial guinea':'gq','benin':'bj','togo':'tg','madagascar':'mg','mauritania':'mr',
             'libya':'ly','sudan':'sd','tanzania':'tz','uganda':'ug','zimbabwe':'zw','namibia':'na',
             'gambia':'gm','sierra leone':'sl','niger':'ne',
@@ -816,42 +816,72 @@
                 scores[p] = { total: 0, breakdown: {} };
                 (appState.teamAssignments[p] || []).forEach(t => { scores[p].breakdown[t] = 0; });
             });
-            (countableResults()).forEach(match => {
+
+            // 1) GROUP-STAGE points come straight from the official standings table
+            // (win=3, draw=1 is identical to league points, and standings can't double-count).
+            const groupPtsByCode = {};
+            (appState.groups || []).forEach(g => (g.standings || []).forEach(s => {
+                const c = flagCodeFor(s.team);
+                if (c && typeof s.points === 'number') groupPtsByCode[c] = s.points;
+            }));
+            for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
+                teams.forEach(t => {
+                    const c = flagCodeFor(t);
+                    const pts = (c && groupPtsByCode[c] != null) ? groupPtsByCode[c] : 0;
+                    scores[owner].total += pts;
+                    scores[owner].breakdown[t] += pts;
+                });
+            }
+
+            // 2) KNOCKOUT bonuses come from completed knockout results (matched by flag code).
+            const now = Date.now();
+            countableResults().forEach(match => {
+                const st = (match.stage || 'group').toLowerCase();
+                if (st === 'group') return;
+                const kt = Date.parse(match.kickoff_utc);
+                if (!isNaN(kt) && kt > now) return; // not played yet
                 for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
-                    [match.home_team, match.away_team].forEach(teamName => {
-                        if (!teams.includes(teamName)) return;
-                        const isHome = teamName === match.home_team;
-                        const myScore = isHome ? match.home_score : match.away_score;
-                        const oppScore = isHome ? match.away_score : match.home_score;
-                        let pts = 0;
-                        if (match.stage === 'group') {
-                            if (myScore > oppScore) pts = SCORING.groupWin;
-                            else if (myScore === oppScore) pts = SCORING.draw;
-                        } else {
-                            let advanced = myScore > oppScore;
-                            if (myScore === oppScore && match.penalties_winner) advanced = match.penalties_winner === teamName;
+                    teams.forEach(assigned => {
+                        const ac = flagCodeFor(assigned);
+                        [[match.home_team, match.home_score, match.away_score], [match.away_team, match.away_score, match.home_score]].forEach(([tn, myS, oppS]) => {
+                            if (flagCodeFor(tn) !== ac) return;
+                            let advanced = myS > oppS;
+                            if (myS === oppS && match.penalties_winner) advanced = flagCodeFor(match.penalties_winner) === ac;
+                            let pts = 0;
                             if (advanced) {
-                                if (match.stage === 'ro32') pts = SCORING.ro32;
-                                else if (match.stage === 'ro16') pts = SCORING.ro16;
-                                else if (match.stage === 'qf') pts = SCORING.qf;
-                                else if (match.stage === 'sf') pts = SCORING.sf;
-                                else if (match.stage === 'final') pts = SCORING.winner;
-                            } else if (match.stage === 'final') { pts = SCORING.runnerUp; }
-                        }
-                        scores[owner].total += pts;
-                        scores[owner].breakdown[teamName] = (scores[owner].breakdown[teamName] || 0) + pts;
+                                if (st === 'ro32') pts = SCORING.ro32;
+                                else if (st === 'ro16') pts = SCORING.ro16;
+                                else if (st === 'qf') pts = SCORING.qf;
+                                else if (st === 'sf') pts = SCORING.sf;
+                                else if (st === 'final') pts = SCORING.winner;
+                            } else if (st === 'final') { pts = SCORING.runnerUp; }
+                            scores[owner].total += pts;
+                            scores[owner].breakdown[assigned] += pts;
+                        });
                     });
                 }
             });
+
+            // 3) Top scorer's nation bonus
             if (appState.topScorerTeam) {
+                const tc = flagCodeFor(appState.topScorerTeam);
                 for (const [owner, teams] of Object.entries(appState.teamAssignments)) {
-                    if (teams.includes(appState.topScorerTeam)) {
-                        scores[owner].total += SCORING.topScorer;
-                        scores[owner].breakdown[appState.topScorerTeam] = (scores[owner].breakdown[appState.topScorerTeam] || 0) + SCORING.topScorer;
-                    }
+                    teams.forEach(t => {
+                        if (flagCodeFor(t) === tc) {
+                            scores[owner].total += SCORING.topScorer;
+                            scores[owner].breakdown[t] += SCORING.topScorer;
+                        }
+                    });
                 }
             }
             return scores;
+        }
+
+        function ukTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return '';
+            return d.toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' UK';
         }
 
         function matchCardHtml(match, opts) {
@@ -861,7 +891,8 @@
             const scoreOrVs = opts.upcoming
                 ? `<div class="match-result" style="font-size:1rem; color:#7DB8D8;">vs</div>`
                 : `<div class="match-result">${match.home_score} <span class="match-vs">vs</span> ${match.away_score}</div>`;
-            const kickoff = opts.upcoming && match.kickoff ? `<div class="match-kickoff">${match.kickoff}</div>` : '';
+            const ko = ukTime(match.kickoff_utc) || (opts.upcoming ? (match.kickoff || '') : '');
+            const kickoff = ko ? `<div class="match-kickoff">${ko}</div>` : '';
             return `<div class="match-item${opts.warmup ? ' friendly' : ''}">
                 <div class="match-header"><div class="${stageClass}">${stageLabel}</div>${kickoff}</div>
                 <div class="match-score">
@@ -876,12 +907,16 @@
 
         function renderResults() {
             const feed = document.getElementById('resultsFeed');
-            const results = countableResults();
+            const now = Date.now();
+            // Only show completed matches (hide any future-dated entries), newest kick-off first.
+            const results = countableResults()
+                .filter(m => { const t = Date.parse(m.kickoff_utc); return isNaN(t) ? true : t <= now + 3 * 3600 * 1000; })
+                .sort((a, b) => (Date.parse(b.kickoff_utc) || 0) - (Date.parse(a.kickoff_utc) || 0));
             if (results.length === 0) {
-                feed.innerHTML = '<p class="empty-note">🏟️ No tournament results yet. Completed group and knockout matches will appear here and move the leaderboard.</p>';
+                feed.innerHTML = '<p class="empty-note">🏟️ No tournament results yet. Completed group and knockout matches will appear here, newest first.</p>';
                 return;
             }
-            feed.innerHTML = results.slice(-15).reverse().map(m => matchCardHtml(m, {})).join('');
+            feed.innerHTML = results.slice(0, 20).map(m => matchCardHtml(m, {})).join('');
         }
 
         function renderGroups() {
@@ -920,7 +955,8 @@
 
         function renderUpcoming() {
             const feed = document.getElementById('upcomingFeed');
-            const upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
+            const upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team)
+                .sort((a, b) => (Date.parse(a.kickoff_utc) || Infinity) - (Date.parse(b.kickoff_utc) || Infinity));
             if (upcoming.length === 0) {
                 feed.innerHTML = '<p class="empty-note">No upcoming fixtures loaded yet. Click "Sync Latest" to pull the schedule.</p>';
                 return;
@@ -1118,15 +1154,15 @@
                     system: 'You provide World Cup 2026 football data using web search. Only report matches that have ACTUALLY been played and finished as of today, with real verified scores from your search — never invent, predict, or guess results or scores. If you cannot verify a match was completed, omit it. Ensure each match\'s home_team and away_team exactly match the real teams that played and agree with the quip. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
-                        content: `Today is ${new Date().toDateString()}. Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Only include matches that have genuinely finished — do not include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
+                        content: `The current date and time is ${new Date().toISOString()} (UTC). Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Only include matches whose kick-off is in the PAST relative to now and that have a verified final score — do NOT include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
 Provide three lists:
-1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 12). Only real group-stage or knockout fixtures — NOT warm-up friendlies. The tournament starts 11 June 2026 — if it hasn't started, return an empty array. Use EXACTLY these team names where applicable: ${teamList}.
-2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8), include a short "kickoff" date/time string if known.
+1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 12). Only real group-stage or knockout fixtures — NOT warm-up friendlies, and NOT matches that haven't been played. The tournament starts 11 June 2026. Include "kickoff_utc" as a full ISO 8601 UTC timestamp for each. Use EXACTLY these team names where applicable: ${teamList}.
+2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8). Include "kickoff_utc" as a full ISO 8601 UTC timestamp.
 3. "groups": the 12 World Cup 2026 group-stage tables (groups A to L, 4 teams each). For each team give played, won, drawn, lost, goal difference (gd) and points. Use the exact team names from the list above.
 Output ONLY this JSON (no other text):
 {
-  "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "quip": "one line" } ],
-  "upcoming": [ { "match_id": "u_id", "home_team": "Team", "away_team": "Team", "stage": "group", "kickoff": "Jun 11, 8pm", "quip": "one line" } ],
+  "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "kickoff_utc": "2026-06-11T19:00:00Z", "quip": "one line" } ],
+  "upcoming": [ { "match_id": "u_id", "home_team": "Team", "away_team": "Team", "stage": "group", "kickoff_utc": "2026-06-18T23:00:00Z", "quip": "one line" } ],
   "groups": [ { "group": "A", "standings": [ { "team": "Team", "played": 0, "won": 0, "drawn": 0, "lost": 0, "gd": 0, "points": 0 } ] } ],
   "top_scorer_team": null
 }`
