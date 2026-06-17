@@ -245,22 +245,22 @@
 
     <script>
         const TEAMS = [
-            { name: 'USA', code: 'us' }, { name: 'Mexico', code: 'mx' }, { name: 'Canada', code: 'ca' },
-            { name: 'England', code: 'gb-eng' }, { name: 'France', code: 'fr' }, { name: 'Germany', code: 'de' },
-            { name: 'Spain', code: 'es' }, { name: 'Italy', code: 'it' }, { name: 'Netherlands', code: 'nl' },
-            { name: 'Portugal', code: 'pt' }, { name: 'Belgium', code: 'be' }, { name: 'Switzerland', code: 'ch' },
-            { name: 'Austria', code: 'at' }, { name: 'Czechia', code: 'cz' }, { name: 'Poland', code: 'pl' },
-            { name: 'Ukraine', code: 'ua' }, { name: 'Serbia', code: 'rs' }, { name: 'Croatia', code: 'hr' },
-            { name: 'Denmark', code: 'dk' }, { name: 'Sweden', code: 'se' }, { name: 'Argentina', code: 'ar' },
-            { name: 'Brazil', code: 'br' }, { name: 'Uruguay', code: 'uy' }, { name: 'Colombia', code: 'co' },
-            { name: 'Chile', code: 'cl' }, { name: 'Ecuador', code: 'ec' }, { name: 'Peru', code: 'pe' },
-            { name: 'Paraguay', code: 'py' }, { name: 'Venezuela', code: 've' }, { name: 'Costa Rica', code: 'cr' },
-            { name: 'Panama', code: 'pa' }, { name: 'Honduras', code: 'hn' }, { name: 'Jamaica', code: 'jm' },
-            { name: 'Japan', code: 'jp' }, { name: 'South Korea', code: 'kr' }, { name: 'Iran', code: 'ir' },
-            { name: 'Saudi Arabia', code: 'sa' }, { name: 'Australia', code: 'au' }, { name: 'New Zealand', code: 'nz' },
-            { name: 'Morocco', code: 'ma' }, { name: 'Egypt', code: 'eg' }, { name: 'Nigeria', code: 'ng' },
-            { name: 'Senegal', code: 'sn' }, { name: 'Cameroon', code: 'cm' }, { name: 'Ghana', code: 'gh' },
-            { name: 'Tunisia', code: 'tn' }, { name: 'Algeria', code: 'dz' }, { name: 'Uzbekistan', code: 'uz' }
+            { name: 'Algeria', code: 'dz' }, { name: 'Argentina', code: 'ar' }, { name: 'Australia', code: 'au' },
+            { name: 'Austria', code: 'at' }, { name: 'Belgium', code: 'be' }, { name: 'Bosnia and Herzegovina', code: 'ba' },
+            { name: 'Brazil', code: 'br' }, { name: 'Canada', code: 'ca' }, { name: 'Cape Verde', code: 'cv' },
+            { name: 'Colombia', code: 'co' }, { name: 'Croatia', code: 'hr' }, { name: 'Curaçao', code: 'cw' },
+            { name: 'Czechia', code: 'cz' }, { name: 'DR Congo', code: 'cd' }, { name: 'Ecuador', code: 'ec' },
+            { name: 'Egypt', code: 'eg' }, { name: 'England', code: 'gb-eng' }, { name: 'France', code: 'fr' },
+            { name: 'Germany', code: 'de' }, { name: 'Ghana', code: 'gh' }, { name: 'Haiti', code: 'ht' },
+            { name: 'Iran', code: 'ir' }, { name: 'Iraq', code: 'iq' }, { name: 'Ivory Coast', code: 'ci' },
+            { name: 'Japan', code: 'jp' }, { name: 'Jordan', code: 'jo' }, { name: 'Mexico', code: 'mx' },
+            { name: 'Morocco', code: 'ma' }, { name: 'Netherlands', code: 'nl' }, { name: 'New Zealand', code: 'nz' },
+            { name: 'Norway', code: 'no' }, { name: 'Panama', code: 'pa' }, { name: 'Paraguay', code: 'py' },
+            { name: 'Portugal', code: 'pt' }, { name: 'Qatar', code: 'qa' }, { name: 'Saudi Arabia', code: 'sa' },
+            { name: 'Scotland', code: 'gb-sct' }, { name: 'Senegal', code: 'sn' }, { name: 'South Africa', code: 'za' },
+            { name: 'South Korea', code: 'kr' }, { name: 'Spain', code: 'es' }, { name: 'Sweden', code: 'se' },
+            { name: 'Switzerland', code: 'ch' }, { name: 'Tunisia', code: 'tn' }, { name: 'Turkey', code: 'tr' },
+            { name: 'USA', code: 'us' }, { name: 'Uruguay', code: 'uy' }, { name: 'Uzbekistan', code: 'uz' }
         ];
         function flagUrl(code, size) { return `https://flagcdn.com/${size || 'w80'}/${code}.png`; }
         function getTeam(name) { return TEAMS.find(t => t.name === name); }
@@ -287,8 +287,8 @@
             'china':'cn','china pr':'cn','india':'in','indonesia':'id','vietnam':'vn','thailand':'th',
             'malaysia':'my','philippines':'ph','uzbekistan':'uz','iraq republic':'iq',
             'morocco':'ma','egypt':'eg','nigeria':'ng','senegal':'sn','cameroon':'cm','ghana':'gh',
-            'tunisia':'tn','algeria':'dz','south africa':'za','ivory coast':'ci','cote divoire':'ci',
-            'mali':'ml','burkina faso':'bf','guinea':'gn','dr congo':'cd','congo':'cg','gabon':'ga',
+            'tunisia':'tn','algeria':'dz','south africa':'za','ivory coast':'ci','cote divoire':'ci','cote d ivoire':'ci',
+            'mali':'ml','burkina faso':'bf','guinea':'gn','dr congo':'cd','congo dr':'cd','democratic republic of congo':'cd','democratic republic of the congo':'cd','congo':'cg','gabon':'ga',
             'zambia':'zm','kenya':'ke','angola':'ao','mozambique':'mz','cape verde':'cv','cabo verde':'cv',
             'equatorial guinea':'gq','benin':'bj','togo':'tg','madagascar':'mg','mauritania':'mr',
             'libya':'ly','sudan':'sd','tanzania':'tz','uganda':'ug','zimbabwe':'zw','namibia':'na',
