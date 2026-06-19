@@ -1561,8 +1561,7 @@ Output ONLY this JSON:
             setTimeout(() => toast.remove(), 3500);
         }
 
-        const _renderResultsOrig=renderResults;renderResults=function(){const selector=document.getElementById('roundSelector');const feed=document.getElementById('resultsFeed');const results=countableResults();const upcoming=(appState.upcoming||[]);const pills=['md1','md2','md3'];if(!selectedRound||!pills.includes(selectedRound))selectedRound='md2';selector.innerHTML=pills.map(k=>`<button class="round-pill${selectedRound===k?' active':''}" onclick="selectRound('${k}')">${ROUND_LABELS[k]}</button>`).join('');const res=results.filter(m=>roundKeyOf(m)===selectedRound);let htmlOut='';if(res.length){htmlOut+='<div class="compact-section-title">Results</div><div class="compact-results-grid">'+res.map(m=>`<div class="compact-result-card">${flagImg(m.home_team,'','w40')} <span>${m.home_team} ${m.home_score} vs ${m.away_score} ${m.away_team}</span> ${flagImg(m.away_team,'','w40')}</div>`).join('')+'</div>';}const remaining=upcoming.filter(m=>((m.stage||'group')==='group')&&((selectedRound==='md2'&&((m.matchday||m._md)==2))||(selectedRound==='md3'&&((m.matchday||m._md)==3)));if(selectedRound!=='md1'&&remaining.length){htmlOut+='<div class="compact-section-title">Upcoming Fixtures</div><div class="compact-results-grid">'+remaining.map(m=>`<div class="compact-result-card">${flagImg(m.home_team||m.likely_home,'','w40')} <span>${m.home_team||m.likely_home} vs ${m.away_team||m.likely_away}</span> ${flagImg(m.away_team||m.likely_away,'','w40')}</div>`).join('')+'</div>';}if(selectedRound==='md3'&&!remaining.length&&!res.length)htmlOut='<p class="empty-note">Upcoming Matchday 3 fixtures will appear here.</p>';feed.innerHTML=htmlOut;};STAGE_ORDER.splice(0,1);
-document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
