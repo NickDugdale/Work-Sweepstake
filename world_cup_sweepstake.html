@@ -51,7 +51,7 @@
         .movement-same { color: #7DB8D8; }
         .leaderboard-points { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: #4FC3F7; text-align: right; }
         .player-breakdown { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(79, 195, 247, 0.1); display: none; grid-column: 1 / -1; }
-        .player-breakdown.open { display: block; }
+        .player-breakdown.open { display: block; } .mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem}.mini-card{background:rgba(79,195,247,.08);padding:.75rem;border-radius:10px;text-align:center}
         .breakdown-team { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; font-size: 0.9rem; }
         .breakdown-team img { width: 28px; height: 18px; object-fit: cover; border-radius: 3px; }
         .breakdown-points { margin-left: auto; color: #4FC3F7; font-weight: 600; }
@@ -218,7 +218,7 @@
                 </div>
 
                 <div class="tab-panel active" data-panel="leaderboard">
-                    <div id="updateBubble" class="update-bubble" style="display: none;"></div>
+                    <div id="updateBubble" class="update-bubble" style="display: none;"></div><div id="funStats"></div>
                     <div class="card">
                         <h2>Leaderboard</h2>
                         <div class="leaderboard" id="leaderboard"></div>
@@ -1561,7 +1561,7 @@ Output ONLY this JSON:
             setTimeout(() => toast.remove(), 3500);
         }
 
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        function renderFunStats(){const el=document.getElementById('funStats'); if(!el) return; const s=calculateScores(); const arr=Object.entries(s).sort((a,b)=>b[1].total-a[1].total); const leader=arr[0]; let hottest='-'; let hp=-1; (appState.groups||[]).forEach(g=>(g.standings||[]).forEach(t=>{if(t.points>hp){hp=t.points; hottest=t.team;}})); el.innerHTML=`<div class="mini-stats"><div class="mini-card">👑 Leader<br><strong>${leader?leader[0]:'-'}</strong></div><div class="mini-card">🔥 Hottest Team<br><strong>${hottest}</strong></div><div class="mini-card">🏆 Top Score<br><strong>${leader?leader[1].total:0}</strong></div></div>`;} const _ud=updateDashboard; updateDashboard=function(){_ud();renderFunStats();}; document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
 </html>
