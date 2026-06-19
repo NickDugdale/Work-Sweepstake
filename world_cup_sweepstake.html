@@ -594,7 +594,8 @@
             if (stored) { appState = { ...appState, ...JSON.parse(stored) }; }
             appState.results = dedupeGames(reconcileList(cleanScored(appState.results)), 'result');
             appState.friendlies = dedupeGames(reconcileList(cleanScored(appState.friendlies)), 'friendly');
-            appState.upcoming = (appState.upcoming || []).filter(m => m && m.home_team && m.away_team);
+            appState.upcoming = (appState.upcoming || []).filter(m => m && (m.home_team || m.away_team || m.home_slot || m.away_slot));
+            appState.groups = computeStandingsFromResults();
             appState.news = sortNewsByDate(dedupeNews(appState.news || [])).slice(0, 30);
             const apiKey = localStorage.getItem('wc2026_apiKey');
             if (apiKey) appState.apiKey = apiKey;
@@ -793,14 +794,9 @@
         }
 
         // Build a code -> group letter map from the standings, to verify real group matches.
-        function teamGroupMap() {
-            const map = {};
-            (appState.groups || []).forEach(g => (g.standings || []).forEach(s => {
-                const c = flagCodeFor(s.team);
-                if (c) map[c] = String(g.group);
-            }));
-            return map;
-        }
+        const GROUP_DRAW={A:['Mexico','South Africa','South Korea','Czechia'],B:['Canada','Bosnia and Herzegovina','Qatar','Switzerland'],C:['Brazil','Morocco','Haiti','Scotland'],D:['USA','Paraguay','Australia','Turkey'],E:['Germany','Curaçao','Ivory Coast','Ecuador'],F:['Netherlands','Japan','Sweden','Tunisia'],G:['Belgium','Egypt','Iran','New Zealand'],H:['Spain','Cape Verde','Saudi Arabia','Uruguay'],I:['France','Senegal','Iraq','Norway'],J:['Argentina','Algeria','Austria','Jordan'],K:['Portugal','DR Congo','Uzbekistan','Colombia'],L:['England','Croatia','Ghana','Panama']};
+function computeStandingsFromResults(){const groups=[];for(const [g,teams] of Object.entries(GROUP_DRAW)){const s={};teams.forEach(t=>s[t]={team:t,played:0,won:0,drawn:0,lost:0,gd:0,points:0});cleanScored(appState.results).forEach(m=>{if(!teams.includes(m.home_team)||!teams.includes(m.away_team)) return; const h=s[m.home_team],a=s[m.away_team]; h.played++;a.played++; h.gd+=m.home_score-m.away_score; a.gd+=m.away_score-m.home_score; if(m.home_score>m.away_score){h.won++;h.points+=3;a.lost++;} else if(m.home_score<m.away_score){a.won++;a.points+=3;h.lost++;} else {h.drawn++;a.drawn++;h.points++;a.points++;}}); groups.push({group:g,standings:Object.values(s)});} return groups;}
+function teamGroupMap() { const map={}; Object.entries(GROUP_DRAW).forEach(([g,teams])=>teams.forEach(t=>{const c=flagCodeFor(t); if(c) map[c]=g;})); return map;}
         function groupsLookComplete(map) { return Object.keys(map).length >= 40; }
         // A result counts only if it's a knockout match, or a group match between two teams
         // that are actually in the same World Cup group (filters out stale warm-up friendlies).
@@ -819,6 +815,7 @@
 
         function renderLeaderboard() {
             const leaderboard = document.getElementById('leaderboard');
+            appState.groups = computeStandingsFromResults();
             const scores = calculateScores();
             const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total).map(([name, data], i) => ({ name, ...data, rank: i + 1 }));
             const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
@@ -863,6 +860,7 @@
             // 1) GROUP-STAGE points come straight from the official standings table
             // (win=3, draw=1 is identical to league points, and standings can't double-count).
             const groupPtsByCode = {};
+            appState.groups = computeStandingsFromResults();
             (appState.groups || []).forEach(g => (g.standings || []).forEach(s => {
                 const c = flagCodeFor(s.team);
                 if (c && typeof s.points === 'number') groupPtsByCode[c] = s.points;
@@ -929,7 +927,7 @@
 
         function matchCardHtml(match, opts) {
             opts = opts || {};
-            const stageLabel = opts.warmup ? 'Warm-up Friendly' : (STAGE_LABELS[match.stage] || match.stage || 'Match');
+            const stageLabel = opts.warmup ? 'Warm-up Friendly' : (((match.stage||'').toLowerCase()==='group' && match._md)?`Matchday ${match._md}`:(STAGE_LABELS[match.stage] || match.stage || 'Match'));
             const stageClass = opts.warmup ? 'match-stage warmup' : 'match-stage';
             const scoreOrVs = opts.upcoming
                 ? `<div class="match-result" style="font-size:1rem; color:#7DB8D8;">vs</div>`
@@ -1143,29 +1141,23 @@
             syncBtn.innerHTML = '<span class="spinner"></span>Syncing...';
             const ranksBefore = computeRanks();
             try {
-                const matchData = await fetchMatchUpdates();
-                await new Promise(r => setTimeout(r, 1500));
-                const groupsData = await fetchGroups();
-                await new Promise(r => setTimeout(r, 1500));
-                const scheduleData = await fetchSchedule();
-                await new Promise(r => setTimeout(r, 1500));
-                const newsData = await fetchNews();
+                const [matchData,scheduleData,newsData] = await Promise.all([fetchMatchUpdates(),fetchSchedule(),fetchNews()]);
 
                 if (matchData.results && matchData.results.length) {
                     appState.results = dedupeGames([...appState.results, ...reconcileList(cleanScored(matchData.results))], 'result');
                 }
                 const sched = (scheduleData.schedule || []).filter(m => m && (m.home_team || m.away_team || m.home_slot || m.away_slot));
                 if (sched.length) appState.upcoming = sched;
-                // Only replace standings when the fetch looks complete, so a partial
+                appState.groups = computeStandingsFromResults();
+                // removed standings fetch
+                /*
                 // (e.g. truncated A–F) response can't blank out half the leaderboard.
                 const incomingGroups = (groupsData.groups || []).filter(g => g && g.group && Array.isArray(g.standings) && g.standings.length);
                 const existingCount = (appState.groups || []).length;
                 if (incomingGroups.length >= Math.max(10, existingCount) ||
                     (existingCount === 0 && incomingGroups.length > 0)) {
                     appState.groups = incomingGroups;
-                } else if (incomingGroups.length) {
-                    showToast(`⚠️ Group data came back incomplete (${incomingGroups.length}/12) — kept previous tables. Try Sync again.`);
-                }
+                */
                 if (matchData.top_scorer_team) appState.topScorerTeam = matchData.top_scorer_team;
                 if (newsData.length) appState.news = sortNewsByDate(dedupeNews([...newsData, ...appState.news])).slice(0, 30);
 
