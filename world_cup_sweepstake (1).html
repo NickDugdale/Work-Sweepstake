@@ -147,7 +147,7 @@
             .header-actions { width: 100%; flex-wrap: wrap; }
             button { flex: 1; min-width: 120px; }
         }
-    .compact-results-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.compact-result-card{background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.15);border-radius:10px;padding:12px;font-size:.82rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}.compact-result-card img{width:22px;height:15px;object-fit:cover;border-radius:2px}.compact-section-title{color:#7DB8D8;margin:12px 0 8px;font-size:.85rem}@media(max-width:1000px){.compact-results-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.compact-results-grid{grid-template-columns:1fr}}</style>
+    .compact-results-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.compact-result-card{background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.15);border-radius:10px;padding:12px;font-size:.82rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}.compact-result-card img{width:22px;height:15px;object-fit:cover;border-radius:2px}.compact-section-title{color:#7DB8D8;margin:12px 0 8px;font-size:.85rem}@media(max-width:1000px){.compact-results-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.compact-results-grid{grid-template-columns:1fr}}.results-inline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.results-inline-card{background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.15);border-radius:10px;padding:10px;font-size:.82rem;font-weight:600;text-align:center;white-space:nowrap}.results-inline-card img{width:22px;height:15px;object-fit:cover;vertical-align:middle}@media(max-width:1000px){.results-inline-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:700px){.results-inline-grid{grid-template-columns:1fr}}</style>
 </head>
 <body>
     <header>
@@ -1004,7 +1004,7 @@ function teamGroupMap() { const map={}; Object.entries(GROUP_DRAW).forEach(([g,t
             selector.innerHTML = present.map(k => pill(k, ROUND_LABELS[k])).join('') + pill('all', 'All');
 
             const shown = selectedRound === 'all' ? all : all.filter(m => roundKeyOf(m) === selectedRound);
-            feed.innerHTML = shown.map(m => matchCardHtml(m, {})).join('');
+            let out='<div class=\"results-inline-grid\">'+shown.map(m=>`<div class=\"results-inline-card\">${flagImg(m.home_team,'','w40')} ${m.home_team} ${m.home_score} vs ${m.away_score} ${m.away_team} ${flagImg(m.away_team,'','w40')}</div>`).join('')+'</div>';const upcoming=(appState.upcoming||[]).filter(m=>selectedRound==='md2'?(m.matchday==2||m._md==2):selectedRound==='md3'?(m.matchday==3||m._md==3):false);if(selectedRound!=='md1'&&upcoming.length){out+='<h3 class=\"compact-section-title\">Upcoming Fixtures</h3><div class=\"results-inline-grid\">'+upcoming.map(m=>`<div class=\"results-inline-card\">${flagImg(m.home_team||m.likely_home,'','w40')} ${(m.home_team||m.likely_home||'?')} vs ${(m.away_team||m.likely_away||'?')} ${flagImg(m.away_team||m.likely_away,'','w40')}</div>`).join('')+'</div>';}feed.innerHTML=out;
         }
 
         function renderGroups() {
@@ -1046,7 +1046,7 @@ function teamGroupMap() { const map={}; Object.entries(GROUP_DRAW).forEach(([g,t
             }).join('') + '</div>';
         }
 
-        const STAGE_ORDER = ['group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
+        const STAGE_ORDER = ['ro32', 'ro16', 'qf', 'sf', 'final'];
         const STAGE_LABELS_SHORT = { group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-finals', sf: 'Semi-finals', final: 'Final' };
         let selectedStage = null;
         function selectStage(key) { selectedStage = key; renderUpcoming(); }
