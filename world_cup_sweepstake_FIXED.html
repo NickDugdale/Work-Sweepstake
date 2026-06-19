@@ -815,6 +815,7 @@ function teamGroupMap() { const map={}; Object.entries(GROUP_DRAW).forEach(([g,t
 
         function renderLeaderboard() {
             const leaderboard = document.getElementById('leaderboard');
+            appState.groups = computeStandingsFromResults();
             const scores = calculateScores();
             const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total).map(([name, data], i) => ({ name, ...data, rank: i + 1 }));
             const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
@@ -859,6 +860,7 @@ function teamGroupMap() { const map={}; Object.entries(GROUP_DRAW).forEach(([g,t
             // 1) GROUP-STAGE points come straight from the official standings table
             // (win=3, draw=1 is identical to league points, and standings can't double-count).
             const groupPtsByCode = {};
+            appState.groups = computeStandingsFromResults();
             (appState.groups || []).forEach(g => (g.standings || []).forEach(s => {
                 const c = flagCodeFor(s.team);
                 if (c && typeof s.points === 'number') groupPtsByCode[c] = s.points;
