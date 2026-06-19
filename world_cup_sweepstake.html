@@ -93,6 +93,15 @@
         .tab-panel { display: none; animation: fadeIn 0.25s ease; }
         .tab-panel.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .update-bubble { background: linear-gradient(135deg, rgba(79,195,247,0.16), rgba(41,182,246,0.08)); border: 1px solid rgba(79,195,247,0.3); border-radius: 14px; padding: 0.9rem 1.25rem; margin-bottom: 1.25rem; font-size: 0.9rem; color: #DCEEF8; line-height: 1.5; }
+        .update-bubble strong { color: #4FC3F7; }
+        .update-bubble .ub-label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: #7DB8D8; margin-bottom: 0.3rem; }
+        .round-selector { display: flex; gap: 0.4rem; overflow-x: auto; margin-bottom: 1.25rem; padding-bottom: 0.25rem; }
+        .round-pill { background: rgba(79,195,247,0.08); color: #7DB8D8; border: 1px solid rgba(79,195,247,0.15); padding: 0.45rem 0.85rem; border-radius: 999px; font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 0.82rem; cursor: pointer; white-space: nowrap; flex: 0 0 auto; transition: all 0.2s ease; }
+        .round-pill:hover { background: rgba(79,195,247,0.16); }
+        .round-pill.active { background: linear-gradient(135deg, #4FC3F7, #29B6F6); color: #0B1F33; border-color: transparent; }
+        .owner-tag { font-size: 0.7rem; color: #4FC3F7; background: rgba(79,195,247,0.12); padding: 0.1rem 0.45rem; border-radius: 6px; margin-left: 0.5rem; white-space: nowrap; font-weight: 600; }
+        .owner-tag.unowned { color: #6B8299; background: rgba(255,255,255,0.04); }
         .empty-note { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
         .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
         .group-table { background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 12px; padding: 1rem 1.25rem; }
@@ -203,6 +212,7 @@
                 </div>
 
                 <div class="tab-panel active" data-panel="leaderboard">
+                    <div id="updateBubble" class="update-bubble" style="display: none;"></div>
                     <div class="card">
                         <h2>Leaderboard</h2>
                         <div class="leaderboard" id="leaderboard"></div>
@@ -212,6 +222,7 @@
                 <div class="tab-panel" data-panel="results">
                     <div class="card">
                         <h2>Tournament Results</h2>
+                        <div id="roundSelector" class="round-selector"></div>
                         <div id="resultsFeed"></div>
                     </div>
                     <div class="card">
@@ -228,10 +239,6 @@
                 </div>
 
                 <div class="tab-panel" data-panel="news">
-                    <div class="card">
-                        <h2>📈 Sweepstake Updates</h2>
-                        <div id="movementFeed"></div>
-                    </div>
                     <div class="card" id="newsCard">
                         <h2>🌍 World Cup Headlines</h2>
                         <div id="newsFeed"></div>
@@ -508,6 +515,8 @@
             groups: [],
             news: [],
             movementNews: [],
+            lastSyncMoves: [],
+            lastSyncTime: null,
             topScorerTeam: null,
             apiKey: null,
             jsonbinKey: null,
@@ -596,6 +605,7 @@
                 results: appState.results, upcoming: appState.upcoming, friendlies: appState.friendlies,
                 groups: appState.groups,
                 news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam,
+                lastSyncMoves: appState.lastSyncMoves, lastSyncTime: appState.lastSyncTime,
                 binId: appState.binId, setupComplete: appState.setupComplete,
                 previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
             }));
@@ -742,11 +752,37 @@
         }
 
         function updateDashboard() {
+            renderUpdateBubble();
             renderLeaderboard();
             renderResults();
             renderGroups();
             renderUpcoming();
             renderNews();
+        }
+
+        // Map each owned team's flag code -> participant name (handles name variants via code).
+        function ownerByCode() {
+            const map = {};
+            Object.entries(appState.teamAssignments || {}).forEach(([owner, teams]) => {
+                (teams || []).forEach(t => { const c = flagCodeFor(t); if (c) map[c] = owner; });
+            });
+            return map;
+        }
+
+        function renderUpdateBubble() {
+            const el = document.getElementById('updateBubble');
+            if (!el) return;
+            const moves = appState.lastSyncMoves || [];
+            const when = appState.lastSyncTime ? new Date(appState.lastSyncTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+            if (!appState.lastSyncTime) { el.style.display = 'none'; return; }
+            el.style.display = 'block';
+            if (moves.length === 0) {
+                el.innerHTML = `<span class="ub-label">Latest update${when ? ' · ' + when : ''}</span>No position changes in the last sync.`;
+                return;
+            }
+            const shown = moves.slice(0, 3).map(m => m.summary).join(' ');
+            const extra = moves.length > 3 ? ` <strong>+${moves.length - 3} more</strong>` : '';
+            el.innerHTML = `<span class="ub-label">Latest update${when ? ' · ' + when : ''}</span>${shown}${extra}`;
         }
 
         // Build a code -> group letter map from the standings, to verify real group matches.
@@ -905,18 +941,45 @@
             </div>`;
         }
 
+        const ROUND_ORDER = ['md1', 'md2', 'md3', 'group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
+        const ROUND_LABELS = { md1: 'Matchday 1', md2: 'Matchday 2', md3: 'Matchday 3', group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-finals', sf: 'Semi-finals', final: 'Final' };
+        let selectedRound = null;
+        function roundKeyOf(m) {
+            const st = (m.stage || 'group').toLowerCase();
+            if (st === 'group') {
+                const md = parseInt(m.matchday, 10);
+                return md === 1 ? 'md1' : md === 2 ? 'md2' : md === 3 ? 'md3' : 'group';
+            }
+            return ROUND_ORDER.includes(st) ? st : 'group';
+        }
+        function selectRound(key) { selectedRound = key; renderResults(); }
+
         function renderResults() {
+            const selector = document.getElementById('roundSelector');
             const feed = document.getElementById('resultsFeed');
             const now = Date.now();
-            // Only show completed matches (hide any future-dated entries), newest kick-off first.
-            const results = countableResults()
+            const all = countableResults()
                 .filter(m => { const t = Date.parse(m.kickoff_utc); return isNaN(t) ? true : t <= now + 3 * 3600 * 1000; })
                 .sort((a, b) => (Date.parse(b.kickoff_utc) || 0) - (Date.parse(a.kickoff_utc) || 0));
-            if (results.length === 0) {
+
+            if (all.length === 0) {
+                selector.innerHTML = '';
                 feed.innerHTML = '<p class="empty-note">🏟️ No tournament results yet. Completed group and knockout matches will appear here, newest first.</p>';
                 return;
             }
-            feed.innerHTML = results.slice(0, 20).map(m => matchCardHtml(m, {})).join('');
+
+            // Which rounds actually have results, in tournament order
+            const present = ROUND_ORDER.filter(k => all.some(m => roundKeyOf(m) === k));
+            // Default to the most recent round that has results
+            if (!selectedRound || (selectedRound !== 'all' && !present.includes(selectedRound))) {
+                selectedRound = present[present.length - 1];
+            }
+
+            const pill = (key, label) => `<button class="round-pill${selectedRound === key ? ' active' : ''}" onclick="selectRound('${key}')">${label}</button>`;
+            selector.innerHTML = present.map(k => pill(k, ROUND_LABELS[k])).join('') + pill('all', 'All');
+
+            const shown = selectedRound === 'all' ? all : all.filter(m => roundKeyOf(m) === selectedRound);
+            feed.innerHTML = shown.map(m => matchCardHtml(m, {})).join('');
         }
 
         function renderGroups() {
@@ -929,6 +992,7 @@
                 return;
             }
             const sorted = groups.slice().sort((a, b) => String(a.group).localeCompare(String(b.group)));
+            const owners = ownerByCode();
             feed.innerHTML = '<div class="groups-grid">' + sorted.map(g => {
                 const rows = g.standings.slice().sort((a, b) => {
                     const pa = a.points || 0, pb = b.points || 0;
@@ -937,8 +1001,12 @@
                 });
                 const body = rows.map((t, i) => {
                     const gd = (t.gd > 0 ? '+' : '') + (t.gd || 0);
+                    const owner = owners[flagCodeFor(t.team)];
+                    const ownerTag = owner
+                        ? `<span class="owner-tag">${owner}</span>`
+                        : `<span class="owner-tag unowned">unpicked</span>`;
                     return `<tr class="${i < 2 ? 'qualify' : ''}">
-                        <td class="team-col">${flagImg(t.team, '', 'w40')}<span>${t.team || ''}</span></td>
+                        <td class="team-col">${flagImg(t.team, '', 'w40')}<span>${t.team || ''}</span>${ownerTag}</td>
                         <td>${t.played || 0}</td><td>${t.won || 0}</td><td>${t.drawn || 0}</td><td>${t.lost || 0}</td>
                         <td>${gd}</td><td class="pts">${t.points || 0}</td>
                     </tr>`;
@@ -969,14 +1037,8 @@
         }
 
         function renderNews() {
-            const movementFeed = document.getElementById('movementFeed');
             const newsFeed = document.getElementById('newsFeed');
-            const movement = (appState.movementNews || []).slice(0, 6);
             const news = sortNewsByDate(dedupeNews(appState.news || []));
-
-            movementFeed.innerHTML = movement.length
-                ? movement.map(item => `<div class="news-item movement"><div class="news-headline">${item.headline}</div><div class="news-summary">${item.summary}</div><div class="news-time">${new Date(item.timestamp).toLocaleString()}</div></div>`).join('')
-                : '<p class="empty-note">No leaderboard changes yet. As results come in, overtakes and rank moves show here.</p>';
 
             if (news.length === 0) {
                 newsFeed.innerHTML = '<p class="empty-note">No headlines yet. Click "Sync Latest" to pull the latest World Cup news.</p>';
@@ -1038,7 +1100,9 @@
 
                 const ranksAfter = computeRanks();
                 const moves = detectMovement(ranksBefore, ranksAfter);
-                if (moves.length) { appState.movementNews = [...moves, ...appState.movementNews].slice(0, 6); showToast('📈 ' + moves[0].summary); }
+                appState.lastSyncMoves = moves;
+                appState.lastSyncTime = new Date().toISOString();
+                if (moves.length) showToast('📈 ' + moves[0].summary);
                 const prevPlain = {};
                 Object.keys(ranksBefore).forEach(n => { prevPlain[n] = ranksBefore[n].rank; });
                 appState.previousRanks = prevPlain;
@@ -1109,6 +1173,7 @@
                 results: appState.results, upcoming: appState.upcoming,
                 groups: appState.groups,
                 news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam || null,
+                lastSyncMoves: appState.lastSyncMoves, lastSyncTime: appState.lastSyncTime,
                 previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
             };
             try {
@@ -1165,11 +1230,11 @@
                         role: 'user',
                         content: `The current date and time is ${new Date().toISOString()} (UTC). Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Only include matches whose kick-off is in the PAST relative to now and that have a verified final score — do NOT include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
 Provide two lists:
-1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 16). Only real group-stage or knockout fixtures — NOT warm-up friendlies, and NOT matches that haven't been played. The tournament starts 11 June 2026. Include "kickoff_utc" as a full ISO 8601 UTC timestamp for each. Use EXACTLY these team names where applicable: ${teamList}.
+1. "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 16). Only real group-stage or knockout fixtures — NOT warm-up friendlies, and NOT matches that haven't been played. The tournament starts 11 June 2026. Include "kickoff_utc" as a full ISO 8601 UTC timestamp for each. For group-stage matches also include "matchday" as 1, 2 or 3 (which round of group games it was). Use EXACTLY these team names where applicable: ${teamList}.
 2. "upcoming": the next scheduled World Cup 2026 fixtures, no scores (max 8). Include "kickoff_utc" as a full ISO 8601 UTC timestamp.
 Output ONLY this JSON (no other text):
 {
-  "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "penalties_winner": null, "kickoff_utc": "2026-06-11T19:00:00Z", "quip": "one line" } ],
+  "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "matchday": 1, "penalties_winner": null, "kickoff_utc": "2026-06-11T19:00:00Z", "quip": "one line" } ],
   "upcoming": [ { "match_id": "u_id", "home_team": "Team", "away_team": "Team", "stage": "group", "kickoff_utc": "2026-06-18T23:00:00Z", "quip": "one line" } ],
   "top_scorer_team": null
 }`
