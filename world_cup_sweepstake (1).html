@@ -147,7 +147,7 @@
             .header-actions { width: 100%; flex-wrap: wrap; }
             button { flex: 1; min-width: 120px; }
         }
-    .results-section-header{cursor:pointer;padding:.8rem 1rem;background:rgba(79,195,247,.08);border-radius:10px;margin:.5rem 0;font-weight:700}.results-section-body{display:none}.results-section-body.open{display:block}.compact-fixture{display:grid;grid-template-columns:1fr auto 1fr;gap:.5rem;padding:.75rem;border-bottom:1px solid rgba(79,195,247,.08)}.compact-fixture:last-child{border-bottom:none}.leader-card{background:rgba(79,195,247,.08);padding:1rem;border-radius:12px;margin-bottom:1rem}</style>
+    .results-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.result-chip{background:rgba(79,195,247,.08);border:1px solid rgba(79,195,247,.15);padding:.8rem;border-radius:10px;text-align:center;font-size:.85rem;font-weight:600}.matchday-header{cursor:pointer;background:rgba(79,195,247,.12);padding:.8rem 1rem;border-radius:10px;margin:1rem 0}.matchday-body{display:none}.matchday-body.open{display:block}@media(max-width:900px){.results-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.results-grid{grid-template-columns:1fr}}</style>
 </head>
 <body>
     <header>
@@ -1561,10 +1561,7 @@ Output ONLY this JSON:
             setTimeout(() => toast.remove(), 3500);
         }
 
-        
-function toggleResultSection(id){document.querySelectorAll('.results-section-body').forEach(x=>x.classList.remove('open'));const el=document.getElementById(id); if(el) el.classList.add('open');}
-const oldRenderResults=renderResults; renderResults=function(){oldRenderResults(); const feed=document.getElementById('resultsFeed'); if(!feed||!feed.children.length) return; const items=[...feed.children]; let wrap=`<div class="results-section-header" onclick="toggleResultSection('latestResults')">▼ Results</div><div id="latestResults" class="results-section-body open"></div>`; feed.innerHTML=wrap; const body=document.getElementById('latestResults'); items.forEach(i=>body.appendChild(i));};
-const oldRenderUpcoming=renderUpcoming; renderUpcoming=function(){oldRenderUpcoming(); const feed=document.getElementById('upcomingFeed'); if(!feed) return; [...feed.querySelectorAll('.match-item')].forEach(card=>{const teams=card.querySelectorAll('.team-matchup-name'); if(teams.length===2 && !card.innerHTML.includes('❓')){ card.innerHTML=`<div class="compact-fixture"><div>${teams[0].textContent}</div><div>vs</div><div>${teams[1].textContent}</div></div>`; }});};
+        function toggleMD(id){document.querySelectorAll('.matchday-body').forEach(x=>x.classList.remove('open'));const el=document.getElementById(id);if(el)el.classList.add('open');} const oldRenderResults=renderResults; renderResults=function(){oldRenderResults(); const feed=document.getElementById('resultsFeed'); if(!feed) return; const cards=[...feed.querySelectorAll('.match-item')]; if(!cards.length) return; const groups={}; cards.forEach(c=>{const md=(c.querySelector('.match-stage')?.textContent)||'Results'; (groups[md]=groups[md]||[]).push(c.outerHTML);}); let out=''; let first=true; Object.entries(groups).forEach(([k,v],i)=>{out+=`<div class="matchday-header" onclick="toggleMD('md${i}')">${first?'▼':'▶'} ${k} (${v.length})</div><div id="md${i}" class="matchday-body ${first?'open':''}"><div class="results-grid">${v.map(x=>`<div class='result-chip'>${x.match(/team-matchup-name">(.*?)<\/div>[\s\S]*?match-result">(.*?)<.*?team-matchup-name">(.*?)<\/div>/)?.slice(1).join('|')||''}</div>`).join('')}</div></div>`; first=false;}); feed.innerHTML=out;};
 document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
 </body>
