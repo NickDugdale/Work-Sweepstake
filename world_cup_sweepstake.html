@@ -45,6 +45,11 @@
         .leaderboard-name-row { display: flex; flex-direction: column; gap: 0.5rem; }
         .leaderboard-teams { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .leaderboard-teams img { width: 24px; height: 16px; object-fit: cover; border-radius: 2px; }
+        .flag-wrap { position: relative; display: inline-block; line-height: 0; }
+        .flag-wrap.drained img { filter: grayscale(1); opacity: 0.45; }
+        .knock-x { position: absolute; top: -5px; right: -5px; width: 15px; height: 15px; border-radius: 50%; background: #E24B4A; color: #fff; font-size: 10px; line-height: 15px; text-align: center; font-weight: 700; box-shadow: 0 0 0 1.5px #0B1F33; }
+        .group-table .knock-x { width: 13px; height: 13px; font-size: 9px; line-height: 13px; top: -4px; right: -4px; }
+        .alive-tag { display: inline-block; font-size: 0.72rem; color: #9FC7DD; background: rgba(79,195,247,0.08); border: 1px solid rgba(79,195,247,0.18); border-radius: 20px; padding: 2px 9px; }
         .leaderboard-movement { font-size: 0.9rem; text-align: center; }
         .movement-up { color: #4CAF50; }
         .movement-down { color: #FF6B6B; }
@@ -370,6 +375,51 @@
             const code = flagCodeFor(name);
             if (!code) return '';
             return `<img${sizeClass ? ' class="' + sizeClass + '"' : ''} src="${flagUrl(code, size)}" alt="${name}" title="${name}" />`;
+        }
+
+        // Flag with optional "knocked out" treatment: drained colour and/or a red corner cross.
+        function flagWithStatus(name, opts) {
+            opts = opts || {};
+            const code = flagCodeFor(name);
+            if (!code) return '';
+            const cls = 'flag-wrap' + (opts.drain ? ' drained' : '');
+            const cross = opts.out ? '<span class="knock-x" aria-label="knocked out">×</span>' : '';
+            return `<span class="${cls}"><img src="${flagUrl(code, opts.size || 'w40')}" alt="${name}" title="${name}${opts.out ? ' — knocked out' : ''}" />${cross}</span>`;
+        }
+
+        const KO_RANK = { ro32: 1, ro16: 2, qf: 3, sf: 4, final: 5 };
+        // Which teams (by flag code) are out of the tournament.
+        // Knockout = lose a match. Group stage = only once ALL group games are played, then
+        // apply the real WC2026 rule: bottom team in each group + the 4 worst 3rd-placed go out.
+        function eliminatedCodes() {
+            const out = new Set();
+            countableResults().forEach(m => {
+                const st = (m.stage || 'group').toLowerCase();
+                if (!KO_RANK[st]) return;
+                const hc = flagCodeFor(m.home_team), ac = flagCodeFor(m.away_team);
+                if (!hc || !ac) return;
+                if (m.home_score > m.away_score) out.add(ac);
+                else if (m.away_score > m.home_score) out.add(hc);
+                else if (m.penalties_winner) {
+                    const w = flagCodeFor(m.penalties_winner);
+                    if (w === hc) out.add(ac); else if (w === ac) out.add(hc);
+                }
+            });
+            const groups = appState.groups || [];
+            const complete = groups.length === 12 && groups.every(g =>
+                Array.isArray(g.standings) && g.standings.length === 4 &&
+                g.standings.every(s => (s.played || 0) >= 3));
+            if (complete) {
+                const cmp = (a, b) => (b.points||0)-(a.points||0) || (b.gd||0)-(a.gd||0) || (b.gf||0)-(a.gf||0);
+                const thirds = [];
+                groups.forEach(g => {
+                    const ranked = g.standings.slice().sort(cmp);
+                    ranked.slice(3).forEach(s => out.add(s.code));   // 4th place (and below) out
+                    if (ranked[2]) thirds.push(ranked[2]);            // 3rd place into the pool
+                });
+                thirds.sort(cmp).slice(8).forEach(s => out.add(s.code)); // worst 3rd-placed out
+            }
+            return out;
         }
 
         const TOTAL_TEAMS = 48;
@@ -881,6 +931,7 @@
             const scores = calculateScores();
             const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total).map(([name, data], i) => ({ name, ...data, rank: i + 1 }));
             const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
+            const out = eliminatedCodes();
             leaderboard.innerHTML = sorted.map(entry => {
                 const prevRank = appState.previousRanks ? appState.previousRanks[entry.name] : undefined;
                 let movement = '<span class="movement-same">—</span>';
@@ -889,11 +940,13 @@
                     else if (prevRank < entry.rank) movement = '<span class="movement-down">↓ ' + (entry.rank - prevRank) + '</span>';
                 }
                 const teams = appState.teamAssignments[entry.name] || [];
-                const teamFlags = teams.map(t => { const tm = getTeam(t); return tm ? `<img src="${flagUrl(tm.code, 'w40')}" alt="${t}" title="${t}" />` : ''; }).join('');
+                const teamFlags = teams.map(t => flagWithStatus(t, { out: out.has(flagCodeFor(t)), size: 'w40' })).join('');
+                const aliveCount = teams.filter(t => !out.has(flagCodeFor(t))).length;
+                const aliveTag = out.size > 0 ? `<div><span class="alive-tag">${aliveCount} of ${teams.length} alive</span></div>` : '';
                 const overview = buildOverview(entry, teams);
                 return `<div class="leaderboard-row" onclick="toggleBreakdown('${entry.name}')">
                     <div class="leaderboard-rank">${entry.rank}</div>
-                    <div class="leaderboard-name-row"><div class="leaderboard-name">${entry.name}</div><div class="leaderboard-teams">${teamFlags}</div></div>
+                    <div class="leaderboard-name-row"><div class="leaderboard-name">${entry.name}</div><div class="leaderboard-teams">${teamFlags}</div>${aliveTag}</div>
                     <div class="leaderboard-movement">${movement}</div>
                     <div class="leaderboard-points">${entry.total}</div>
                     <div class="player-breakdown" id="breakdown-${entry.name}">${overview}</div>
@@ -1088,6 +1141,7 @@
             }
             const sorted = groups.slice().sort((a, b) => String(a.group).localeCompare(String(b.group)));
             const owners = ownerByCode();
+            const out = eliminatedCodes();
             feed.innerHTML = '<div class="groups-grid">' + sorted.map(g => {
                 const rows = g.standings.slice().sort((a, b) => {
                     const pa = a.points || 0, pb = b.points || 0;
@@ -1100,8 +1154,9 @@
                     const ownerTag = owner
                         ? `<span class="owner-tag">${owner}</span>`
                         : `<span class="owner-tag unowned">unpicked</span>`;
+                    const isOut = out.has(t.code);
                     return `<tr class="${i < 2 ? 'qualify' : ''}">
-                        <td class="team-col">${flagImg(t.team, '', 'w40')}<span>${t.team || ''}</span>${ownerTag}</td>
+                        <td class="team-col">${flagWithStatus(t.team, { drain: isOut, out: isOut, size: 'w40' })}<span>${t.team || ''}</span>${ownerTag}</td>
                         <td>${t.played || 0}</td><td>${t.won || 0}</td><td>${t.drawn || 0}</td><td>${t.lost || 0}</td>
                         <td>${gd}</td><td class="pts">${t.points || 0}</td>
                     </tr>`;
