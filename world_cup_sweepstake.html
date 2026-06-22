@@ -1235,33 +1235,40 @@
             syncBtn.innerHTML = '<span class="spinner"></span>Syncing...';
             const ranksBefore = computeRanks();
             try {
-                // Run the three calls at once instead of sequentially (big speed win).
-                // allSettled means one failing call doesn't sink the others.
-                const [mRes, sRes, nRes] = await Promise.allSettled([
-                    fetchMatchUpdates(), fetchSchedule(), fetchNews()
-                ]);
-                const matchData = mRes.status === 'fulfilled' ? mRes.value : { results: [] };
-                const scheduleData = sRes.status === 'fulfilled' ? sRes.value : { schedule: [] };
-                const newsData = nRes.status === 'fulfilled' ? nRes.value : [];
-                if (mRes.status === 'rejected') showToast('⚠️ Results: ' + (mRes.reason && mRes.reason.message || 'failed'));
+                // The results call is the most important AND the heaviest (most web searches),
+                // so run it first and on its own with one retry — racing it against schedule+news
+                // was letting it get rate-limited and fail silently while News still succeeded.
+                let matchData = { results: [] };
+                let resultsError = null;
+                try {
+                    matchData = await fetchMatchUpdates();
+                } catch (e1) {
+                    await new Promise(r => setTimeout(r, 2500));
+                    try { matchData = await fetchMatchUpdates(); }
+                    catch (e2) { resultsError = e2.message || 'failed'; }
+                }
 
+                const beforeCount = appState.results.length;
                 if (matchData.results && matchData.results.length) {
                     appState.results = dedupeGames([...appState.results, ...reconcileList(cleanScored(matchData.results))], 'result');
                 }
-                // Standings are computed from the real results against the official draw —
-                // no separate API call needed, and they can't be wrong about who's in which group.
+                const newResults = appState.results.length - beforeCount;
+                // Standings are computed locally from the results against the official draw.
                 refreshStandings();
+                if (matchData.top_scorer_team) appState.topScorerTeam = matchData.top_scorer_team;
 
+                // Schedule + news are lighter and less critical, so fetch them together.
+                const [sRes, nRes] = await Promise.allSettled([fetchSchedule(), fetchNews()]);
+                const scheduleData = sRes.status === 'fulfilled' ? sRes.value : { schedule: [] };
+                const newsData = nRes.status === 'fulfilled' ? nRes.value : [];
                 const sched = (scheduleData.schedule || []).filter(m => m && (m.home_team || m.away_team || m.home_slot || m.away_slot));
                 if (sched.length) appState.upcoming = sched;
-                if (matchData.top_scorer_team) appState.topScorerTeam = matchData.top_scorer_team;
                 if (newsData.length) appState.news = sortNewsByDate(dedupeNews([...newsData, ...appState.news])).slice(0, 30);
 
                 const ranksAfter = computeRanks();
                 const moves = detectMovement(ranksBefore, ranksAfter);
                 appState.lastSyncMoves = moves;
                 appState.lastSyncTime = new Date().toISOString();
-                if (moves.length) showToast('📈 ' + moves[0].summary);
                 const prevPlain = {};
                 Object.keys(ranksBefore).forEach(n => { prevPlain[n] = ranksBefore[n].rank; });
                 appState.previousRanks = prevPlain;
@@ -1270,7 +1277,16 @@
                 updateDashboard();
 
                 const ok = await publishToViewers();
-                showToast(ok ? '✓ Synced & published to viewers' : '✓ Synced locally (publish failed — see Settings)');
+                // Tell the truth about what actually happened with the results feed.
+                if (resultsError) {
+                    showToast('⚠️ Results didn\'t update (' + resultsError + '). Leaderboard unchanged — try Sync again shortly.');
+                } else if (newResults > 0) {
+                    showToast('✓ ' + newResults + ' new result' + (newResults === 1 ? '' : 's') + (ok ? ' · published to viewers' : ' · publish failed'));
+                } else if (moves.length) {
+                    showToast('📈 ' + moves[0].summary);
+                } else {
+                    showToast('✓ Synced — no new finished matches found yet' + (ok ? '' : ' (publish failed)'));
+                }
             } catch (error) {
                 console.error('Sync error:', error);
                 showToast('❌ ' + error.message);
@@ -1387,7 +1403,7 @@
                     system: 'You provide World Cup 2026 football data using web search. Only report matches that have ACTUALLY been played and finished as of today, with real verified scores from your search — never invent, predict, or guess results or scores. If you cannot verify a match was completed, omit it. Ensure each match\'s home_team and away_team exactly match the real teams that played and agree with the quip. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
-                        content: `The current date and time is ${new Date().toISOString()} (UTC). Using web search, find the most up-to-date World Cup 2026 football data, prioritising matches from the last few days. Only include matches whose kick-off is in the PAST relative to now and that have a verified final score — do NOT include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
+                        content: `The current date and time is ${new Date().toISOString()} (UTC). Using web search, find the most up-to-date World Cup 2026 football data. IMPORTANT: make sure you capture the MOST RECENTLY completed matches, including every game finished in the last 48 hours (search the latest results/scoreboard, not just older fixtures). Only include matches whose kick-off is in the PAST relative to now and that have a verified final score — do NOT include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
 Provide one list:
 "results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 20). Only real group-stage or knockout fixtures — NOT warm-up friendlies, and NOT matches that haven't been played. The tournament starts 11 June 2026. Include "kickoff_utc" as a full ISO 8601 UTC timestamp for each. For group-stage matches also include "matchday" as 1, 2 or 3 (which round of group games it was). Use EXACTLY these team names where applicable: ${teamList}.
 Output ONLY this JSON (no other text):
@@ -1396,7 +1412,7 @@ Output ONLY this JSON (no other text):
   "top_scorer_team": null
 }`
                     }],
-                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }]
+                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]
                 })
             });
             if (!response.ok) {
