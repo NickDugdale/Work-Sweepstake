@@ -567,7 +567,8 @@
             selectedTeams: [],
             setupComplete: false,
             previousRanks: {},
-            lastUpdated: null
+            lastUpdated: null,
+            lastScheduleFetch: null
         };
 
         let IS_VIEWER = false, VIEW_BIN_ID = null;
@@ -650,7 +651,8 @@
                 news: appState.news, movementNews: appState.movementNews, topScorerTeam: appState.topScorerTeam,
                 lastSyncMoves: appState.lastSyncMoves, lastSyncTime: appState.lastSyncTime,
                 binId: appState.binId, setupComplete: appState.setupComplete,
-                previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated
+                previousRanks: appState.previousRanks, lastUpdated: appState.lastUpdated,
+                lastScheduleFetch: appState.lastScheduleFetch
             }));
         }
 
@@ -1258,8 +1260,19 @@
                 if (matchData.top_scorer_team) appState.topScorerTeam = matchData.top_scorer_team;
 
                 // Schedule + news are lighter and less critical, so fetch them together.
-                const [sRes, nRes] = await Promise.allSettled([fetchSchedule(), fetchNews()]);
-                const scheduleData = sRes.status === 'fulfilled' ? sRes.value : { schedule: [] };
+                // The bracket/predictions call is heavy and changes slowly, so don't run it
+                // every sync — refresh it at most once every ~2h (or if we have no fixtures yet).
+                // Routine syncs become just results + news, which is much faster.
+                const TWO_HOURS = 2 * 60 * 60 * 1000;
+                const needSchedule = !appState.lastScheduleFetch
+                    || (Date.now() - appState.lastScheduleFetch > TWO_HOURS)
+                    || !(appState.upcoming && appState.upcoming.length);
+                const [sRes, nRes] = await Promise.allSettled([
+                    needSchedule ? fetchSchedule() : Promise.resolve(null),
+                    fetchNews()
+                ]);
+                const scheduleData = (sRes.status === 'fulfilled' && sRes.value) ? sRes.value : { schedule: [] };
+                if (needSchedule && sRes.status === 'fulfilled' && sRes.value) appState.lastScheduleFetch = Date.now();
                 const newsData = nRes.status === 'fulfilled' ? nRes.value : [];
                 const sched = (scheduleData.schedule || []).filter(m => m && (m.home_team || m.away_team || m.home_slot || m.away_slot));
                 if (sched.length) appState.upcoming = sched;
@@ -1394,18 +1407,28 @@
 
         async function fetchMatchUpdates() {
             const teamList = TEAMS.map(t => t.name).join(', ');
+            // Only ask for games we DON'T already have. Listing the matches we've already
+            // logged lets the model skip them and focus searching on the missing ones — far
+            // faster, and it stops the long tail (e.g. Group E) being truncated away.
+            const knownPairs = (appState.results || [])
+                .filter(m => m && m.home_team && m.away_team)
+                .map(m => `${m.home_team} v ${m.away_team}${m.stage && m.stage !== 'group' ? ' (' + m.stage + ')' : ''}`);
+            const haveBlock = knownPairs.length
+                ? `We ALREADY have verified final scores for these ${knownPairs.length} matches — do NOT return any of them again:\n${knownPairs.join('\n')}\n\nSearch ONLY for World Cup 2026 matches that have FINISHED (kick-off in the past, with a verified final score) but are NOT already in the list above. Still scan all 12 groups A to L and any knockout rounds so you don't miss a newly-finished game. If every finished match is already in our list, return an empty "results" array.`
+                : `Return EVERY completed official World Cup 2026 match with a final score. Work through ALL 12 groups (A to L) systematically — each group has 4 teams playing up to 3 matchdays — then add any completed knockout matches. Do not cap or omit any finished game.`;
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'x-api-key': appState.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
                 body: JSON.stringify({
                     model: 'claude-sonnet-4-6',
-                    max_tokens: 5120,
+                    max_tokens: 8000,
                     system: 'You provide World Cup 2026 football data using web search. Only report matches that have ACTUALLY been played and finished as of today, with real verified scores from your search — never invent, predict, or guess results or scores. If you cannot verify a match was completed, omit it. Ensure each match\'s home_team and away_team exactly match the real teams that played and agree with the quip. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
                         content: `The current date and time is ${new Date().toISOString()} (UTC). Using web search, find the most up-to-date World Cup 2026 football data. IMPORTANT: make sure you capture the MOST RECENTLY completed matches, including every game finished in the last 48 hours (search the latest results/scoreboard, not just older fixtures). Only include matches whose kick-off is in the PAST relative to now and that have a verified final score — do NOT include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
 Provide one list:
-"results": COMPLETED official World Cup 2026 TOURNAMENT matches with final scores (max 20). Only real group-stage or knockout fixtures — NOT warm-up friendlies, and NOT matches that haven't been played. The tournament starts 11 June 2026. Include "kickoff_utc" as a full ISO 8601 UTC timestamp for each. For group-stage matches also include "matchday" as 1, 2 or 3 (which round of group games it was). Use EXACTLY these team names where applicable: ${teamList}.
+"results": ${haveBlock}
+For each match include "kickoff_utc" as a full ISO 8601 UTC timestamp. For group-stage matches also include "matchday" as 1, 2 or 3 (which round of group games it was). Only real group-stage or knockout fixtures — NOT warm-up friendlies, and NOT matches that haven't been played. The tournament started 11 June 2026. Use EXACTLY these team names where applicable: ${teamList}.
 Output ONLY this JSON (no other text):
 {
   "results": [ { "match_id": "r_id", "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "matchday": 1, "penalties_winner": null, "kickoff_utc": "2026-06-11T19:00:00Z", "quip": "one line" } ],
