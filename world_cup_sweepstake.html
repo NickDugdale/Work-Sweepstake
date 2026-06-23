@@ -123,6 +123,8 @@
         .result-section-body { border: 1px solid rgba(79,195,247,0.15); border-top: none; border-radius: 0 0 12px 12px; padding: 1rem; background: rgba(11,31,51,0.35); }
         .result-section-body .match-item { margin-bottom: 0.85rem; }
         .result-section-body .match-item:last-child { margin-bottom: 0; }
+        .round-divider { margin: 1.1rem 0 0.75rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #7DB8D8; border-top: 1px solid rgba(79,195,247,0.15); padding-top: 0.85rem; }
+        .result-section-body > .round-divider:first-child { margin-top: 0; border-top: none; padding-top: 0; }
         /* Compact upcoming fixture rows (decided ties) */
         .fixture-rows { display: flex; flex-direction: column; gap: 0.5rem; }
         .fixture-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(79,195,247,0.1); border-radius: 10px; padding: 0.7rem 0.95rem; }
@@ -249,14 +251,7 @@
 
                 <div class="tab-panel" data-panel="results">
                     <div class="card">
-                        <h2>Tournament Results</h2>
-                        <div id="roundSelector" class="round-selector"></div>
                         <div id="resultsFeed"></div>
-                    </div>
-                    <div class="card">
-                        <h2>Upcoming Matches</h2>
-                        <div id="stageSelector" class="round-selector"></div>
-                        <div id="upcomingFeed"></div>
                     </div>
                 </div>
 
@@ -851,7 +846,6 @@
             renderLeaderboard();
             renderResults();
             renderGroups();
-            renderUpcoming();
             renderNews();
         }
 
@@ -1079,29 +1073,27 @@
         function toggleResultsSection(key) { openResultsKey = (openResultsKey === key) ? null : key; renderResults(); }
 
         function renderResults() {
-            const selector = document.getElementById('roundSelector');
             const feed = document.getElementById('resultsFeed');
-            if (selector) selector.innerHTML = '';
             const now = Date.now();
-            const all = countableResults()
-                .filter(m => { const t = Date.parse(m.kickoff_utc); return isNaN(t) ? true : t <= now + 3 * 3600 * 1000; })
-                .sort((a, b) => (Date.parse(b.kickoff_utc) || 0) - (Date.parse(a.kickoff_utc) || 0));
+            const results = countableResults().slice();
 
-            if (all.length === 0) {
-                feed.innerHTML = '<p class="empty-note">🏟️ No tournament results yet. Completed group and knockout matches will appear here, newest first.</p>';
-                return;
-            }
+            // Upcoming fixtures that haven't been played. Drop any that we already have a
+            // result for (same teams + stage), so a game never shows as both played and to-play.
+            const resultSigs = new Set(results.map(m => gameSig(m, 'result')));
+            const upcoming = (appState.upcoming || [])
+                .filter(m => m && (m.home_team || m.away_team || m.home_slot || m.away_slot))
+                .filter(m => !(m.home_team && m.away_team) || !resultSigs.has(gameSig(m, 'result')));
 
-            // Give every group result a matchday (1/2/3): use the API's value when present,
-            // otherwise infer it from the order of match dates within that group.
+            // Assign a matchday (1/2/3) to every group match — results AND upcoming — by ordering
+            // the distinct match dates within each group. Uses the API's matchday when present.
             const gmap = teamGroupMap();
-            const byGroup = {};
-            all.forEach(m => {
+            const buckets = {};
+            [...results, ...upcoming].forEach(m => {
                 if ((m.stage || 'group').toLowerCase() !== 'group') return;
                 const grp = gmap[flagCodeFor(m.home_team)] || gmap[flagCodeFor(m.away_team)] || '?';
-                (byGroup[grp] = byGroup[grp] || []).push(m);
+                (buckets[grp] = buckets[grp] || []).push(m);
             });
-            Object.values(byGroup).forEach(list => {
+            Object.values(buckets).forEach(list => {
                 const days = [...new Set(list.map(m => (m.kickoff_utc || '').slice(0, 10)).filter(Boolean))].sort();
                 list.forEach(m => {
                     const apiMd = parseInt(m.matchday, 10);
@@ -1111,21 +1103,51 @@
                 });
             });
 
-            // Each round that has results becomes a collapsible section. Only one is open at a
-            // time; the latest round opens by default, and the user can collapse them all.
-            const present = ROUND_ORDER.filter(k => all.some(m => roundKeyOf(m) === k));
-            if (openResultsKey === undefined) openResultsKey = present[present.length - 1];
-            else if (openResultsKey !== null && !present.includes(openResultsKey)) openResultsKey = present[present.length - 1];
+            // Group both lists by round key (md1/md2/md3 or ro32/ro16/qf/sf/final).
+            const resByKey = {}, upByKey = {};
+            results.forEach(m => { const k = roundKeyOf(m); (resByKey[k] = resByKey[k] || []).push(m); });
+            upcoming.forEach(m => { const k = roundKeyOf(m); (upByKey[k] = upByKey[k] || []).push(m); });
+
+            // Matchdays always show; knockout rounds only once they're reachable (no empty
+            // Quarter-finals bubble during the group stage). A round shows if it has anything.
+            const allowed = allowedStages();
+            const koOk = k => ['md1', 'md2', 'md3', 'group'].includes(k) || allowed.includes(k);
+            const present = ROUND_ORDER.filter(k => koOk(k) &&
+                ((resByKey[k] && resByKey[k].length) || (upByKey[k] && upByKey[k].length)));
+
+            if (present.length === 0) {
+                feed.innerHTML = '<p class="empty-note">🏟️ No fixtures or results yet. Click "Sync Latest" to pull the schedule.</p>';
+                return;
+            }
+
+            // Default-open the latest round that has results; if nothing's been played, open the first.
+            const withResults = present.filter(k => resByKey[k] && resByKey[k].length);
+            const fallbackOpen = withResults.length ? withResults[withResults.length - 1] : present[0];
+            if (openResultsKey === undefined) openResultsKey = fallbackOpen;
+            else if (openResultsKey !== null && !present.includes(openResultsKey)) openResultsKey = fallbackOpen;
 
             feed.innerHTML = present.map(k => {
-                const items = all.filter(m => roundKeyOf(m) === k);
+                const res = (resByKey[k] || []).slice().sort((a, b) => (Date.parse(a.kickoff_utc) || 0) - (Date.parse(b.kickoff_utc) || 0));
+                const up = (upByKey[k] || []).slice().sort((a, b) => (Date.parse(a.kickoff_utc) || Infinity) - (Date.parse(b.kickoff_utc) || Infinity));
                 const isOpen = openResultsKey === k;
+                let body = '';
+                if (res.length) body += res.map(m => matchCardHtml(m, {})).join('');
+                if (up.length) {
+                    body += `<div class="round-divider">${res.length ? 'Still to play' : 'Upcoming'}</div>`;
+                    const known = up.filter(m => m.home_team && m.away_team);
+                    const undecided = up.filter(m => !m.home_team || !m.away_team);
+                    if (known.length) body += '<div class="fixture-rows">' + known.map(fixtureRowHtml).join('') + '</div>';
+                    if (undecided.length) {
+                        body += '<p class="empty-note" style="margin:0.75rem 0;">❓ = not yet decided. "Likely" is the current standings leader for that slot and may still change.</p>';
+                        body += undecided.map(fixtureCardHtml).join('');
+                    }
+                }
                 return `<div class="result-section">
                     <button class="result-section-header${isOpen ? ' open' : ''}" onclick="toggleResultsSection('${k}')">
-                        <span>${ROUND_LABELS[k]}<span class="result-section-count">${items.length}</span></span>
+                        <span>${ROUND_LABELS[k]}</span>
                         <span class="result-chevron">${isOpen ? '▾' : '▸'}</span>
                     </button>
-                    ${isOpen ? `<div class="result-section-body">${items.map(m => matchCardHtml(m, {})).join('')}</div>` : ''}
+                    ${isOpen ? `<div class="result-section-body">${body}</div>` : ''}
                 </div>`;
             }).join('');
         }
@@ -1173,8 +1195,6 @@
 
         const STAGE_ORDER = ['group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
         const STAGE_LABELS_SHORT = { group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-finals', sf: 'Semi-finals', final: 'Final' };
-        let selectedStage = null;
-        function selectStage(key) { selectedStage = key; renderUpcoming(); }
 
         function smallFlag(name) { return name ? flagImg(name, '', 'w20') : ''; }
         function fixtureSideHtml(team, slot, likely, possible) {
@@ -1210,7 +1230,7 @@
         }
 
         // Only reveal a knockout stage once the previous one has begun — so the Round of 16
-        // predictions don't appear until the Round of 32 is actually under way, and so on.
+        // doesn't appear until the Round of 32 is actually under way, and so on.
         function allowedStages() {
             let deepest = 0;
             countableResults().forEach(m => {
@@ -1218,37 +1238,6 @@
                 if (i > deepest) deepest = i;
             });
             return STAGE_ORDER.filter((s, i) => i <= deepest + 1);
-        }
-
-        function renderUpcoming() {
-            const selector = document.getElementById('stageSelector');
-            const feed = document.getElementById('upcomingFeed');
-            const all = (appState.upcoming || []).filter(m => m && (m.home_team || m.away_team || m.home_slot || m.away_slot));
-            const allowed = allowedStages();
-            const present = STAGE_ORDER.filter(s => allowed.includes(s) && all.some(m => (m.stage || 'group').toLowerCase() === s));
-            if (present.length === 0) {
-                selector.innerHTML = '';
-                feed.innerHTML = '<p class="empty-note">No upcoming fixtures to show yet. The next knockout round appears once the current round kicks off.</p>';
-                return;
-            }
-            if (!selectedStage || !present.includes(selectedStage)) selectedStage = present[0];
-
-            selector.innerHTML = present.map(s =>
-                `<button class="round-pill${selectedStage === s ? ' active' : ''}" onclick="selectStage('${s}')">${STAGE_LABELS_SHORT[s]}</button>`
-            ).join('');
-
-            const shown = all.filter(m => (m.stage || 'group').toLowerCase() === selectedStage)
-                .sort((a, b) => (Date.parse(a.kickoff_utc) || Infinity) - (Date.parse(b.kickoff_utc) || Infinity));
-            const known = shown.filter(m => m.home_team && m.away_team);
-            const undecided = shown.filter(m => !m.home_team || !m.away_team);
-
-            let html = '';
-            if (known.length) html += '<div class="fixture-rows">' + known.map(fixtureRowHtml).join('') + '</div>';
-            if (undecided.length) {
-                html += '<p class="empty-note" style="margin:1rem 0 0.75rem;">❓ = not yet decided. "Likely" is the current standings leader for that slot and may still change.</p>';
-                html += undecided.map(fixtureCardHtml).join('');
-            }
-            feed.innerHTML = html;
         }
 
         function newsItemHtml(item) {
@@ -1480,7 +1469,7 @@
                     system: 'You provide World Cup 2026 football data using web search. Only report matches that have ACTUALLY been played and finished as of today, with real verified scores from your search — never invent, predict, or guess results or scores. If you cannot verify a match was completed, omit it. Ensure each match\'s home_team and away_team exactly match the real teams that played and agree with the quip. Output ONLY valid JSON with no preamble, no markdown, no commentary.',
                     messages: [{
                         role: 'user',
-                        content: `The current date and time is ${new Date().toISOString()} (UTC). Using web search, find the most up-to-date World Cup 2026 football data. IMPORTANT: make sure you capture the MOST RECENTLY completed matches, including every game finished in the last 48 hours (search the latest results/scoreboard, not just older fixtures). Only include matches whose kick-off is in the PAST relative to now and that have a verified final score — do NOT include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
+                        content: `The current date and time is ${new Date().toISOString()} (UTC). Read ONE comprehensive source for World Cup 2026 results: ESPN's "2026 FIFA World Cup fixtures, results & match schedule" page at https://www.espn.com/soccer/story/_/id/48939282/2026-fifa-world-cup-fixtures-results-match-schedule-group-stage-knockout-rounds-bracket — search for it if needed (e.g. "ESPN 2026 World Cup fixtures results schedule") and read its full results grid. Use as few searches as possible (ideally 1, at most 3). From that page, take EVERY completed match that has a verified final score — across all 12 groups and any knockout rounds — including the most recently finished games (last 48 hours). Only include matches whose kick-off is in the PAST relative to now; do NOT include matches that haven't kicked off yet. Keep each "quip" under 12 words and make sure the teams named in the quip are exactly the home_team and away_team. Use consistent official team names (e.g. always "Bosnia and Herzegovina").
 Provide one list:
 "results": ${haveBlock}
 For each match include "kickoff_utc" as a full ISO 8601 UTC timestamp. For group-stage matches also include "matchday" as 1, 2 or 3 (which round of group games it was). Only real group-stage or knockout fixtures — NOT warm-up friendlies, and NOT matches that haven't been played. The tournament started 11 June 2026. Use EXACTLY these team names where applicable: ${teamList}.
@@ -1490,7 +1479,7 @@ Output ONLY this JSON (no other text):
   "top_scorer_team": null
 }`
                     }],
-                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }]
+                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
                 })
             });
             if (!response.ok) {
@@ -1527,7 +1516,7 @@ Use these official team names: ${teamList}. Use the same name consistently.
 Output ONLY this JSON (no other text), most matches first:
 { "schedule": [ { "stage": "ro32", "kickoff_utc": "2026-06-29T19:00:00Z", "home_team": null, "away_team": null, "home_slot": "Winner Group A", "away_slot": "Runner-up Group B", "likely_home": "Mexico", "likely_away": "Croatia", "possible_home": ["Mexico","South Korea"], "possible_away": ["Croatia","Belgium"] } ] }`
                     }],
-                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 4 }]
+                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }]
                 })
             });
             if (!response.ok) {
@@ -1556,7 +1545,7 @@ Output ONLY this JSON (no other text), most matches first:
                         messages: [{ role: 'user', content: `Today is ${new Date().toDateString()}. Using web search, find the 5 most RECENT and distinct World Cup 2026 news stories (squad announcements, injuries, transfers, predictions, headlines), newest first. Prioritise items published in the last few days. Each must be about a different topic.${avoidBlock}
 Output ONLY this JSON:
 { "news": [ { "id": "unique_id", "headline": "Headline", "summary": "One sentence", "timestamp": "${new Date().toISOString()}" } ] }` }],
-                        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }]
+                        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }]
                     })
                 });
                 if (!response.ok) return [];
