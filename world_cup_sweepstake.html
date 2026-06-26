@@ -41,7 +41,20 @@
         .leaderboard-row { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(79, 195, 247, 0.1); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; display: grid; grid-template-columns: 50px 1fr 120px 80px; gap: 1.5rem; align-items: center; cursor: pointer; transition: all 0.3s ease; }
         .leaderboard-row:hover { background: rgba(79, 195, 247, 0.08); transform: translateX(4px); }
         .leaderboard-rank { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-align: center; }
-        .leaderboard-name { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; }
+        .leaderboard-name { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+        .award-badges { display: inline-flex; align-items: center; gap: 0.3rem; }
+        .award-badge { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(79,195,247,0.12); font-size: 0.85rem; line-height: 1; cursor: default; }
+        .award-badge.boot { background: rgba(232,185,35,0.16); }
+        .award-badge svg { display: block; }
+        .award-tip { position: absolute; bottom: 135%; left: 50%; transform: translateX(-50%); white-space: nowrap; background: #06141f; color: #E6F2FA; border: 1px solid rgba(79,195,247,0.3); font-size: 0.72rem; font-weight: 400; padding: 5px 9px; border-radius: 8px; opacity: 0; pointer-events: none; transition: opacity 0.12s; z-index: 20; }
+        .award-badge:hover .award-tip, .award-badge:focus .award-tip { opacity: 1; }
+        .scoring-card { padding: 0; overflow: hidden; }
+        .scoring-toggle { width: 100%; background: transparent; border: none; color: #4FC3F7; font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 600; padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .scoring-body { padding: 0 1.25rem 1.25rem; }
+        .scoring-intro { color: #9FC7DD; font-size: 0.85rem; margin: 0 0 0.75rem; }
+        .scoring-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.5rem; }
+        .scoring-item { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 8px; font-size: 0.85rem; color: #C9E3F2; }
+        .scoring-pts { color: #4FC3F7; font-weight: 700; white-space: nowrap; }
         .leaderboard-name-row { display: flex; flex-direction: column; gap: 0.5rem; }
         .leaderboard-teams { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .leaderboard-teams img { width: 24px; height: 16px; object-fit: cover; border-radius: 2px; }
@@ -269,6 +282,10 @@
 
                 <div class="tab-panel active" data-panel="leaderboard">
                     <div id="updateBubble" class="update-bubble" style="display: none;"></div>
+                    <div class="card scoring-card">
+                        <button class="scoring-toggle" onclick="toggleScoring()"><span>🧮 How points are scored</span><span id="scoringChevron">▸</span></button>
+                        <div id="scoringBody" class="scoring-body" style="display: none;"></div>
+                    </div>
                     <div class="card">
                         <h2>Leaderboard</h2>
                         <div class="leaderboard" id="leaderboard"></div>
@@ -906,6 +923,7 @@
             renderGroups();
             renderBracket();
             renderNews();
+            renderScoring();
         }
 
         // Map each owned team's flag code -> participant name (handles name variants via code).
@@ -979,12 +997,94 @@
         }
         function refreshStandings() { appState.groups = computeStandings(); }
 
+        // Per-team tally across every completed match (group + knockout): goals for/against,
+        // and W/D/L (a penalty-shootout match counts as a draw, so the loser isn't "beaten").
+        function teamStats() {
+            const stats = {};
+            countableResults().forEach(m => {
+                if (typeof m.home_score !== 'number' || typeof m.away_score !== 'number') return;
+                [[flagCodeFor(m.home_team), m.home_team, m.home_score, m.away_score],
+                 [flagCodeFor(m.away_team), m.away_team, m.away_score, m.home_score]].forEach(([c, name, gf, ga]) => {
+                    if (!c) return;
+                    const s = stats[c] || (stats[c] = { name, gf: 0, ga: 0, w: 0, d: 0, l: 0 });
+                    s.gf += gf; s.ga += ga;
+                    if (gf > ga) s.w++; else if (gf < ga) s.l++; else s.d++;
+                });
+            });
+            Object.values(stats).forEach(s => s.gd = s.gf - s.ga);
+            return stats;
+        }
+        function ownerByTeamCode() {
+            const map = {};
+            Object.entries(appState.teamAssignments || {}).forEach(([person, teams]) => {
+                (teams || []).forEach(t => { const c = flagCodeFor(t); if (c) map[c] = person; });
+            });
+            return map;
+        }
+        // Side awards. Golden Boot = owned team with most goals. Most Dominant = owned team that
+        // has won most convincingly: fewest losses first, then goal difference, then most wins.
+        // Wooden Spoon = whoever is last on the leaderboard.
+        function computeAwards() {
+            const result = { goldenBoot: null, dominant: null, woodenSpoon: null };
+            if (!countableResults().length) return result;
+            const stats = teamStats(), owner = ownerByTeamCode();
+            const owned = Object.entries(stats)
+                .filter(([c, s]) => owner[c] && (s.w + s.d + s.l) > 0)
+                .map(([c, s]) => ({ code: c, owner: owner[c], ...s }));
+            if (owned.length) {
+                result.goldenBoot = owned.slice().sort((a, b) => b.gf - a.gf || b.gd - a.gd)[0];
+                result.dominant = owned.slice().sort((a, b) => a.l - b.l || b.gd - a.gd || b.w - a.w)[0];
+            }
+            const ranks = computeRanks();
+            const names = Object.keys(ranks);
+            if (names.length) result.woodenSpoon = names.reduce((lo, n) => ranks[n].rank > ranks[lo].rank ? n : lo, names[0]);
+            return result;
+        }
+        const GOLD_BOOT_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M3 6h3.4v6.2l9.5 2.2c2 .5 3.6 1.7 3.6 3.8V19H3z" fill="#E8B923"/><rect x="3" y="19" width="17.5" height="1.7" rx="0.6" fill="#B5891A"/></svg>';
+        function awardBadgesFor(name, awards) {
+            let html = '';
+            if (awards.goldenBoot && awards.goldenBoot.owner === name)
+                html += `<span class="award-badge boot" tabindex="0">${GOLD_BOOT_SVG}<span class="award-tip">Golden Boot — owns ${awards.goldenBoot.name}, the top-scoring team (${awards.goldenBoot.gf} goals)</span></span>`;
+            if (awards.dominant && awards.dominant.owner === name)
+                html += `<span class="award-badge" tabindex="0">🔥<span class="award-tip">Most Dominant — owns ${awards.dominant.name}, the most convincing winners (${awards.dominant.w}W ${awards.dominant.d}D ${awards.dominant.l}L, ${awards.dominant.gd >= 0 ? '+' : ''}${awards.dominant.gd} GD)</span></span>`;
+            if (awards.woodenSpoon === name)
+                html += `<span class="award-badge" tabindex="0">🥄<span class="award-tip">Wooden Spoon — bottom of the table</span></span>`;
+            return html ? `<span class="award-badges">${html}</span>` : '';
+        }
+
+        function renderScoring() {
+            const el = document.getElementById('scoringBody');
+            if (!el) return;
+            const rows = [
+                ['Group game won', SCORING.groupWin],
+                ['Group game drawn', SCORING.draw],
+                ['Win your Round of 32 match', SCORING.ro32],
+                ['Win your Round of 16 match', SCORING.ro16],
+                ['Win your Quarter-final', SCORING.qf],
+                ['Win your Semi-final', SCORING.sf],
+                ['Reach the final (runner-up)', SCORING.runnerUp],
+                ['Win the final (champions)', SCORING.winner],
+                ["Own the tournament's top scorer", SCORING.topScorer]
+            ];
+            el.innerHTML = '<p class="scoring-intro">Everyone\'s total is the points from all four of their teams added together:</p><div class="scoring-grid">' +
+                rows.map(r => `<div class="scoring-item"><span>${r[0]}</span><span class="scoring-pts">+${r[1]}</span></div>`).join('') + '</div>';
+        }
+        function toggleScoring() {
+            const body = document.getElementById('scoringBody');
+            const chev = document.getElementById('scoringChevron');
+            if (!body) return;
+            const open = body.style.display === 'none';
+            body.style.display = open ? 'block' : 'none';
+            if (chev) chev.textContent = open ? '▾' : '▸';
+        }
+
         function renderLeaderboard() {
             const leaderboard = document.getElementById('leaderboard');
             const scores = calculateScores();
             const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total).map(([name, data], i) => ({ name, ...data, rank: i + 1 }));
             const ordinal = n => { const s = ['th','st','nd','rd'], v = n % 100; return n + (s[(v-20)%10] || s[v] || s[0]); };
             const out = eliminatedCodes();
+            const awards = computeAwards();
             leaderboard.innerHTML = sorted.map(entry => {
                 const prevRank = appState.previousRanks ? appState.previousRanks[entry.name] : undefined;
                 let movement = '<span class="movement-same">—</span>';
@@ -999,7 +1099,7 @@
                 const overview = buildOverview(entry, teams);
                 return `<div class="leaderboard-row" onclick="toggleBreakdown('${entry.name}')">
                     <div class="leaderboard-rank">${entry.rank}</div>
-                    <div class="leaderboard-name-row"><div class="leaderboard-name">${entry.name}</div><div class="leaderboard-teams">${teamFlags}</div>${aliveTag}</div>
+                    <div class="leaderboard-name-row"><div class="leaderboard-name">${entry.name}${awardBadgesFor(entry.name, awards)}</div><div class="leaderboard-teams">${teamFlags}</div>${aliveTag}</div>
                     <div class="leaderboard-movement">${movement}</div>
                     <div class="leaderboard-points">${entry.total}</div>
                     <div class="player-breakdown" id="breakdown-${entry.name}">${overview}</div>
@@ -1162,10 +1262,12 @@
                 });
             });
 
-            // Group both lists by round key (md1/md2/md3 or ro32/ro16/qf/sf/final).
+            // Group both lists by round key. Upcoming fixtures are only kept for the group
+            // matchdays — knockout predictions now live on the bracket (Tables tab), so they're
+            // dropped here to avoid duplicating it.
             const resByKey = {}, upByKey = {};
             results.forEach(m => { const k = roundKeyOf(m); (resByKey[k] = resByKey[k] || []).push(m); });
-            upcoming.forEach(m => { const k = roundKeyOf(m); (upByKey[k] = upByKey[k] || []).push(m); });
+            upcoming.forEach(m => { const k = roundKeyOf(m); if (['md1', 'md2', 'md3'].includes(k)) (upByKey[k] = upByKey[k] || []).push(m); });
 
             // Matchdays always show; knockout rounds only once they're reachable (no empty
             // Quarter-finals bubble during the group stage). A round shows if it has anything.
@@ -1736,7 +1838,9 @@ Output ONLY this JSON (no other text):
         }
 
         // Small, focused results fetch for a single group or knockout round — fast (1 search).
-        async function fetchScopedResults(scopeText) {
+        // Retries once on a transient failure (e.g. the model returns no clean JSON that run).
+        async function fetchScopedResults(scopeText, _retried) {
+          try {
             const teamList = TEAMS.map(t => t.name).join(', ');
             const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
@@ -1759,9 +1863,14 @@ Output ONLY this JSON: { "results": [ { "home_team": "Team", "away_team": "Team"
             }
             const data = await response.json();
             const textBlock = data.content.find(c => c.type === 'text');
-            if (!textBlock) return [];
+            if (!textBlock) throw new Error('Empty response');
             const parsed = parseLooseJson(textBlock.text);
             return parsed.results || [];
+          } catch (e) {
+            // One quiet retry covers the common case where the model didn't emit clean JSON.
+            if (!_retried) { await new Promise(r => setTimeout(r, 1500)); return fetchScopedResults(scopeText, true); }
+            throw e;
+          }
         }
 
         // Re-pull just one group's results and merge (overwrites a wrong score, never duplicates).
