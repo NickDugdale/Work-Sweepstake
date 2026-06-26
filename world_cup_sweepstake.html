@@ -150,6 +150,15 @@
         .bracket-side.win { color: #fff; font-weight: 700; background: rgba(79,195,247,0.1); }
         .bracket-score { font-weight: 700; color: #4FC3F7; margin-left: auto; padding-left: 0.4rem; }
         @media (max-width: 600px) { .bracket-round { min-width: 150px; } }
+        .bracket { position: relative; }
+        .bracket-lines { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 0; overflow: visible; }
+        .bracket-round, .bracket-match { position: relative; z-index: 1; }
+        .mini-sync { background: rgba(79,195,247,0.12); border: 1px solid rgba(79,195,247,0.25); color: #4FC3F7; width: 22px; height: 22px; border-radius: 50%; font-size: 0.85rem; line-height: 1; cursor: pointer; margin-left: 0.5rem; vertical-align: middle; padding: 0; }
+        .mini-sync:hover { background: rgba(79,195,247,0.22); }
+        .mini-sync:disabled { opacity: 0.55; cursor: default; }
+        .mini-sync.spinning { animation: miniSpin 0.8s linear infinite; }
+        .bracket-round-label .mini-sync { width: 18px; height: 18px; font-size: 0.72rem; margin-left: 0.4rem; }
+        @keyframes miniSpin { to { transform: rotate(360deg); } }
         .group-table { background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 12px; padding: 1rem 1.25rem; }
         .group-title { font-family: 'Outfit', sans-serif; font-weight: 600; color: #4FC3F7; margin-bottom: 0.75rem; font-size: 1rem; }
         .group-table table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -1234,7 +1243,7 @@
                     </tr>`;
                 }).join('');
                 return `<div class="group-table">
-                    <div class="group-title">Group ${g.group}</div>
+                    <div class="group-title">Group ${g.group}<button class="mini-sync" title="Refresh Group ${g.group}" onclick="event.stopPropagation(); syncGroup('${g.group}', this)">↻</button></div>
                     <table>
                         <thead><tr><th class="team-col">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
                         <tbody>${body}</tbody>
@@ -1361,14 +1370,45 @@
                     const aScore = d.played ? (d.flip ? d.hScore : d.aScore) : null;
                     const hWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.home.team);
                     const aWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.away.team);
-                    return `<div class="bracket-match${d.played ? ' done' : ''}">
+                    return `<div class="bracket-match${d.played ? ' done' : ''}" id="bm-${num}">
                         ${bracketSideHtml(d.home, hScore, hWin)}
                         ${bracketSideHtml(d.away, aScore, aWin)}
                     </div>`;
                 }).join('');
-                return `<div class="bracket-round"><div class="bracket-round-label">${round.label}</div><div class="bracket-matches">${matches}</div></div>`;
+                const refresh = `<button class="mini-sync" title="Refresh ${round.label}" onclick="syncRound('${round.key}', '${round.label}', this)">↻</button>`;
+                return `<div class="bracket-round"><div class="bracket-round-label">${round.label}${refresh}</div><div class="bracket-matches">${matches}</div></div>`;
             }).join('');
-            feed.innerHTML = `<p class="info-text" style="margin-bottom:0.85rem;">Official bracket. Group winners and runners-up fill in from the standings; third-placed slots and later rounds resolve as games are played. Scroll sideways to see all rounds. ⟶</p><div class="bracket">${cols}</div>`;
+            feed.innerHTML = `<p class="info-text" style="margin-bottom:0.85rem;">Official bracket. Group winners and runners-up fill in from the standings; third-placed slots and later rounds resolve as games are played. Use ↻ on a round to re-check its results.</p><div class="bracket"><svg class="bracket-lines" xmlns="http://www.w3.org/2000/svg"></svg>${cols}</div>`;
+            requestAnimationFrame(() => requestAnimationFrame(drawBracketConnectors));
+        }
+
+        // Draw orthogonal connector lines from each feeder match to its receiver, measured from
+        // the real laid-out positions (reliable regardless of column heights).
+        function drawBracketConnectors() {
+            const wrap = document.querySelector('#bracketFeed .bracket');
+            if (!wrap) return;
+            const svg = wrap.querySelector('.bracket-lines');
+            if (!svg) return;
+            const W = wrap.scrollWidth, H = wrap.scrollHeight;
+            if (!W || !H) return; // tab hidden — redraw happens when it opens
+            svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+            const wr = wrap.getBoundingClientRect();
+            let paths = '';
+            BRACKET_ROUNDS.forEach(r => r.nums.forEach(num => {
+                const def = BRACKET[num];
+                [def.h, def.a].forEach(side => {
+                    if (!side.m) return;
+                    const fromEl = document.getElementById('bm-' + side.m);
+                    const toEl = document.getElementById('bm-' + num);
+                    if (!fromEl || !toEl) return;
+                    const f = fromEl.getBoundingClientRect(), t = toEl.getBoundingClientRect();
+                    const x1 = f.right - wr.left + wrap.scrollLeft, y1 = f.top + f.height / 2 - wr.top + wrap.scrollTop;
+                    const x2 = t.left - wr.left + wrap.scrollLeft, y2 = t.top + t.height / 2 - wr.top + wrap.scrollTop;
+                    const midX = (x1 + x2) / 2;
+                    paths += `<path d="M${x1} ${y1} H${midX} V${y2} H${x2}" fill="none" stroke="rgba(79,195,247,0.4)" stroke-width="1.5"/>`;
+                });
+            }));
+            svg.innerHTML = paths;
         }
 
         const STAGE_ORDER = ['group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
@@ -1695,6 +1735,77 @@ Output ONLY this JSON (no other text):
             return parsed;
         }
 
+        // Small, focused results fetch for a single group or knockout round — fast (1 search).
+        async function fetchScopedResults(scopeText) {
+            const teamList = TEAMS.map(t => t.name).join(', ');
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': appState.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-6',
+                    max_tokens: 2500,
+                    system: 'You provide World Cup 2026 football results using web search. Only report matches ACTUALLY played and finished, with real verified scores — never invent or predict. Output ONLY valid JSON, no preamble or markdown.',
+                    messages: [{
+                        role: 'user',
+                        content: `The current date/time is ${new Date().toISOString()} (UTC). Read ESPN's 2026 World Cup results page (https://www.espn.com/soccer/story/_/id/48939282/2026-fifa-world-cup-fixtures-results-match-schedule-group-stage-knockout-rounds-bracket — search for it if needed). ${scopeText} Only include matches already finished with a verified final score (kick-off in the past). Use EXACTLY these team names where applicable: ${teamList}.
+Output ONLY this JSON: { "results": [ { "home_team": "Team", "away_team": "Team", "home_score": 0, "away_score": 0, "stage": "group", "matchday": 1, "penalties_winner": null, "kickoff_utc": "2026-06-11T19:00:00Z" } ] }`
+                    }],
+                    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }]
+                })
+            });
+            if (!response.ok) {
+                if (response.status === 429) throw new Error('Rate limit — wait ~60s');
+                throw new Error('API ' + response.status);
+            }
+            const data = await response.json();
+            const textBlock = data.content.find(c => c.type === 'text');
+            if (!textBlock) return [];
+            const parsed = parseLooseJson(textBlock.text);
+            return parsed.results || [];
+        }
+
+        // Re-pull just one group's results and merge (overwrites a wrong score, never duplicates).
+        async function syncGroup(letter, btn) {
+            if (!appState.apiKey) { showToast('❌ Enter your Anthropic API key in Settings first'); return; }
+            const orig = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
+            try {
+                const names = Object.keys(GROUPS).filter(c => GROUPS[c] === letter).map(c => TEAM_NAME_BY_CODE[c]).filter(Boolean);
+                const scope = `Return EVERY completed GROUP ${letter} match. These four teams play each other: ${names.join(', ')}. Include all finished games among them (up to 6), each with stage "group" and its matchday (1, 2 or 3).`;
+                const results = await fetchScopedResults(scope);
+                const before = appState.results.length;
+                if (results.length) appState.results = dedupeGames([...appState.results, ...reconcileList(cleanScored(results))], 'result');
+                refreshStandings(); saveToLocalStorage(); updateDashboard();
+                const added = appState.results.length - before;
+                await publishToViewers();
+                showToast(added > 0 ? `✓ Group ${letter} refreshed · ${added} new` : `✓ Group ${letter} refreshed`);
+            } catch (e) {
+                showToast(`⚠️ Group ${letter} refresh failed (${e.message || 'error'})`);
+            } finally {
+                if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
+            }
+        }
+
+        // Re-pull just one knockout round's results and merge.
+        async function syncRound(stage, label, btn) {
+            if (!appState.apiKey) { showToast('❌ Enter your Anthropic API key in Settings first'); return; }
+            if (btn) { btn.disabled = true; btn.classList.add('spinning'); }
+            try {
+                const scope = `Return EVERY completed ${label} match (knockout stage "${stage}") with its final score, each tagged stage "${stage}". If a match was decided on penalties, set "penalties_winner" to the team that won the shootout.`;
+                const results = await fetchScopedResults(scope);
+                const before = appState.results.length;
+                if (results.length) appState.results = dedupeGames([...appState.results, ...reconcileList(cleanScored(results))], 'result');
+                refreshStandings(); saveToLocalStorage(); updateDashboard();
+                const added = appState.results.length - before;
+                await publishToViewers();
+                showToast(added > 0 ? `✓ ${label} refreshed · ${added} new` : `✓ ${label} refreshed — nothing yet`);
+            } catch (e) {
+                showToast(`⚠️ ${label} refresh failed (${e.message || 'error'})`);
+            } finally {
+                if (btn) { btn.disabled = false; btn.classList.remove('spinning'); }
+            }
+        }
+
         async function fetchSchedule() {
             const teamList = TEAMS.map(t => t.name).join(', ');
             const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1908,7 +2019,9 @@ Output ONLY this JSON:
         function showTab(name) {
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === name));
+            if (name === 'tables') requestAnimationFrame(() => requestAnimationFrame(drawBracketConnectors));
         }
+        window.addEventListener('resize', () => { if (typeof drawBracketConnectors === 'function') drawBracketConnectors(); });
 
         function showToast(message) {
             const toast = document.createElement('div');
