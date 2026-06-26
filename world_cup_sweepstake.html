@@ -55,6 +55,34 @@
         .scoring-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0.5rem; }
         .scoring-item { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 8px; font-size: 0.85rem; color: #C9E3F2; }
         .scoring-pts { color: #4FC3F7; font-weight: 700; white-space: nowrap; }
+        .brand { display: flex; align-items: center; gap: 0.7rem; }
+        .tide-logo-chip { width: 38px; height: 38px; border-radius: 9px; overflow: hidden; background: #fff; flex: 0 0 auto; }
+        .tide-logo-chip svg { width: 100%; height: 100%; display: block; }
+        .present-bar { margin-bottom: 1rem; display: flex; }
+        .present-btn { background: #4FC3F7; color: #062138; border: none; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1rem; padding: 0.7rem 1.4rem; border-radius: 10px; cursor: pointer; }
+        .present-btn:hover { background: #6fd0fb; }
+        .present-overlay { position: fixed; inset: 0; background: #0B1F33; z-index: 2000; flex-direction: column; padding: 1.5rem 2rem 2.5rem; }
+        .present-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+        .present-header h2 { font-family: 'Outfit', sans-serif; font-size: 2rem; color: #fff; margin: 0; flex: 1; }
+        .present-logo { width: 52px; height: 52px; border-radius: 12px; }
+        .present-close { background: #E2483D; color: #fff; border: none; width: 46px; height: 46px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; line-height: 1; flex: 0 0 auto; }
+        .present-close:hover { background: #c93529; }
+        .present-stage { flex: 1; overflow: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .present-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(79,195,247,0.15); color: #4FC3F7; border: none; width: 52px; height: 52px; border-radius: 50%; font-size: 2rem; cursor: pointer; line-height: 1; }
+        .present-nav:hover { background: rgba(79,195,247,0.32); }
+        .present-nav.prev { left: 1rem; } .present-nav.next { right: 1rem; }
+        .present-progress { position: absolute; left: 0; bottom: 0; height: 6px; width: 100%; background: rgba(255,255,255,0.08); }
+        .present-progress-bar { height: 100%; width: 0; background: #4FC3F7; }
+        .present-lb { width: 100%; max-width: 1100px; }
+        .present-lb-row { display: grid; grid-template-columns: 60px 1fr auto auto; gap: 1.5rem; align-items: center; padding: 0.85rem 1.5rem; background: rgba(255,255,255,0.04); border-radius: 12px; margin-bottom: 0.55rem; }
+        .present-lb-rank { font-family: 'Outfit', sans-serif; font-size: 1.7rem; font-weight: 700; color: #4FC3F7; }
+        .present-lb-name { font-family: 'Outfit', sans-serif; font-size: 1.45rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 0.5rem; }
+        .present-lb-flags { display: flex; gap: 0.3rem; }
+        .present-lb-flags img { width: 30px; border-radius: 3px; }
+        .present-lb-pts { font-family: 'Outfit', sans-serif; font-size: 1.7rem; font-weight: 700; color: #fff; min-width: 56px; text-align: right; }
+        .present-results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; width: 100%; max-width: 1150px; }
+        .present-empty { color: #7DB8D8; font-size: 1.4rem; text-align: center; }
+        .present-bracket-wrap { position: relative; }
         .leaderboard-name-row { display: flex; flex-direction: column; gap: 0.5rem; }
         .leaderboard-teams { display: flex; gap: 0.3rem; flex-wrap: wrap; }
         .leaderboard-teams img { width: 24px; height: 16px; object-fit: cover; border-radius: 2px; }
@@ -213,7 +241,7 @@
 </head>
 <body>
     <header>
-        <h1>⚽ World Cup 2026 Sweepstake</h1>
+        <div class="brand"><span class="tide-logo-chip" id="headerLogo"></span><h1>World Cup 2026 Sweepstake</h1></div>
         <div class="header-actions" id="masterActions">
             <button class="secondary" onclick="showSettings()">Settings</button>
             <button id="newsBtn" class="secondary" onclick="syncNews()">News</button>
@@ -278,13 +306,13 @@
                     <button class="tab" data-tab="results" onclick="showTab('results')">⚽ Match Results</button>
                     <button class="tab" data-tab="tables" onclick="showTab('tables')">📊 Tables</button>
                     <button class="tab" data-tab="news" onclick="showTab('news')">📰 News</button>
+                    <button class="tab" data-tab="scoring" onclick="showTab('scoring')">🧮 Scoring</button>
                 </div>
 
                 <div class="tab-panel active" data-panel="leaderboard">
                     <div id="updateBubble" class="update-bubble" style="display: none;"></div>
-                    <div class="card scoring-card">
-                        <button class="scoring-toggle" onclick="toggleScoring()"><span>🧮 How points are scored</span><span id="scoringChevron">▸</span></button>
-                        <div id="scoringBody" class="scoring-body" style="display: none;"></div>
+                    <div class="present-bar">
+                        <button class="present-btn" onclick="enterPresentMode()">📺 Present mode</button>
                     </div>
                     <div class="card">
                         <h2>Leaderboard</h2>
@@ -315,8 +343,26 @@
                         <div id="newsFeed"></div>
                     </div>
                 </div>
+                <div class="tab-panel" data-panel="scoring">
+                    <div class="card">
+                        <h2>🧮 How points are scored</h2>
+                        <div id="scoringBody"></div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
+
+    <div class="present-overlay" id="presentMode" style="display: none;">
+        <div class="present-header">
+            <span class="tide-logo-chip present-logo" id="presentLogo"></span>
+            <h2 id="presentTitle">Leaderboard</h2>
+            <button class="present-close" onclick="exitPresentMode()" aria-label="Exit present mode">✕</button>
+        </div>
+        <div class="present-stage" id="presentStage"></div>
+        <button class="present-nav prev" onclick="presentStep(-1)" aria-label="Previous">‹</button>
+        <button class="present-nav next" onclick="presentStep(1)" aria-label="Next">›</button>
+        <div class="present-progress"><div class="present-progress-bar" id="presentProgress"></div></div>
     </div>
 
     <div class="modal" id="settingsModal"><div class="modal-content"></div></div>
@@ -674,8 +720,11 @@
             IS_VIEWER = !!VIEW_BIN_ID;
         }
 
+        const TIDE_LOGO = '<svg viewBox="0 0 554 554" xmlns="http://www.w3.org/2000/svg"><rect width="554" height="554" fill="#fff"/><path fill="#051f42" d="M411.2,291.1v-15.3h-40.8v-17.6h35.8v-14.8h-35.8v-16.2h39.9v-15.3h-58.4v79.1h59.3ZM277.9,227.2h10.8c13.7,0,22.4,6.5,22.4,23.2v2.2c0,16.7-8.7,23.2-22.4,23.2h-10.8v-48.6h0ZM289.9,291.1c24.2,0,40.8-13.7,40.8-38.5v-2.2c0-24.7-16.6-38.5-40.8-38.5h-30.4v79.1h30.4ZM228.8,211.9h-19v79.1h19v-79.1h0ZM161.6,291.1v-63.9h21.7v-15.3h-62.4v15.3h21.8v63.9h18.9Z"/><path fill="#36a9e1" d="M411.2,321.7c-89.5-15.4-179,15.4-268.4,0v-11.7h268.4v11.7Z"/><path fill="#051f42" d="M411.2,342.1H142.8v-11.7c89.5,15.4,179-15.4,268.4,0v11.7Z"/></svg>';
+
         function initializeApp() {
             detectMode();
+            const hl = document.getElementById('headerLogo'); if (hl) hl.innerHTML = TIDE_LOGO;
             if (IS_VIEWER) { initViewerMode(); return; }
             loadFromLocalStorage();
             if (appState.setupComplete && Object.keys(appState.teamAssignments).length === appState.participants.length) {
@@ -1459,53 +1508,59 @@
             const sc = (scoreVal != null) ? `<span class="bracket-score">${scoreVal}</span>` : '';
             return `<div class="bracket-side${isWinner ? ' win' : ''}${side.team ? '' : ' tbd'}">${flag}<span class="bracket-team">${name}</span>${sc}</div>`;
         }
-        function renderBracket() {
-            const card = document.getElementById('bracketCard');
-            const feed = document.getElementById('bracketFeed');
-            if (!feed) return;
+        // Build the round columns HTML for a bracket. idPrefix keeps the Tables copy ('bm-') and
+        // the Present copy ('pbm-') from sharing element ids.
+        function buildBracketColumns(idPrefix, opts) {
+            opts = opts || {};
             const data = resolveBracket();
-            card.style.display = 'block';
-            const cols = BRACKET_ROUNDS.map(round => {
+            return BRACKET_ROUNDS.map(round => {
                 const matches = round.nums.map(num => {
                     const d = data[num];
                     const hScore = d.played ? (d.flip ? d.aScore : d.hScore) : null;
                     const aScore = d.played ? (d.flip ? d.hScore : d.aScore) : null;
                     const hWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.home.team);
                     const aWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.away.team);
-                    return `<div class="bracket-match${d.played ? ' done' : ''}" id="bm-${num}">
+                    return `<div class="bracket-match${d.played ? ' done' : ''}" id="${idPrefix}${num}">
                         ${bracketSideHtml(d.home, hScore, hWin)}
                         ${bracketSideHtml(d.away, aScore, aWin)}
                     </div>`;
                 }).join('');
-                const refresh = `<button class="mini-sync" title="Refresh ${round.label}" onclick="syncRound('${round.key}', '${round.label}', this)">↻</button>`;
+                const refresh = opts.noRefresh ? '' : `<button class="mini-sync" title="Refresh ${round.label}" onclick="syncRound('${round.key}', '${round.label}', this)">↻</button>`;
                 return `<div class="bracket-round"><div class="bracket-round-label">${round.label}${refresh}</div><div class="bracket-matches">${matches}</div></div>`;
             }).join('');
-            feed.innerHTML = `<p class="info-text" style="margin-bottom:0.85rem;">Official bracket. Group winners and runners-up fill in from the standings; third-placed slots and later rounds resolve as games are played. Use ↻ on a round to re-check its results.</p><div class="bracket"><svg class="bracket-lines" xmlns="http://www.w3.org/2000/svg"></svg>${cols}</div>`;
-            requestAnimationFrame(() => requestAnimationFrame(drawBracketConnectors));
+        }
+        function renderBracket() {
+            const card = document.getElementById('bracketCard');
+            const feed = document.getElementById('bracketFeed');
+            if (!feed) return;
+            card.style.display = 'block';
+            feed.innerHTML = `<p class="info-text" style="margin-bottom:0.85rem;">Official bracket. Group winners and runners-up fill in from the standings; third-placed slots and later rounds resolve as games are played. Use ↻ on a round to re-check its results.</p><div class="bracket"><svg class="bracket-lines" xmlns="http://www.w3.org/2000/svg"></svg>${buildBracketColumns('bm-')}</div>`;
+            requestAnimationFrame(() => requestAnimationFrame(() => drawBracketConnectorsIn(document.querySelector('#bracketFeed .bracket'), 'bm-')));
         }
 
         // Draw orthogonal connector lines from each feeder match to its receiver, measured from
-        // the real laid-out positions (reliable regardless of column heights).
-        function drawBracketConnectors() {
-            const wrap = document.querySelector('#bracketFeed .bracket');
+        // the real laid-out positions. The sx/sy ratio corrects for any scale transform applied
+        // to the bracket (used by Present mode to fit the whole tree on screen).
+        function drawBracketConnectorsIn(wrap, idPrefix) {
             if (!wrap) return;
             const svg = wrap.querySelector('.bracket-lines');
             if (!svg) return;
             const W = wrap.scrollWidth, H = wrap.scrollHeight;
-            if (!W || !H) return; // tab hidden — redraw happens when it opens
+            if (!W || !H) return;
             svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
             const wr = wrap.getBoundingClientRect();
+            const sx = wr.width ? (W / wr.width) : 1, sy = wr.height ? (H / wr.height) : 1;
             let paths = '';
             BRACKET_ROUNDS.forEach(r => r.nums.forEach(num => {
                 const def = BRACKET[num];
                 [def.h, def.a].forEach(side => {
                     if (!side.m) return;
-                    const fromEl = document.getElementById('bm-' + side.m);
-                    const toEl = document.getElementById('bm-' + num);
+                    const fromEl = document.getElementById(idPrefix + side.m);
+                    const toEl = document.getElementById(idPrefix + num);
                     if (!fromEl || !toEl) return;
                     const f = fromEl.getBoundingClientRect(), t = toEl.getBoundingClientRect();
-                    const x1 = f.right - wr.left + wrap.scrollLeft, y1 = f.top + f.height / 2 - wr.top + wrap.scrollTop;
-                    const x2 = t.left - wr.left + wrap.scrollLeft, y2 = t.top + t.height / 2 - wr.top + wrap.scrollTop;
+                    const x1 = (f.right - wr.left) * sx + wrap.scrollLeft, y1 = (f.top + f.height / 2 - wr.top) * sy + wrap.scrollTop;
+                    const x2 = (t.left - wr.left) * sx + wrap.scrollLeft, y2 = (t.top + t.height / 2 - wr.top) * sy + wrap.scrollTop;
                     const midX = (x1 + x2) / 2;
                     paths += `<path d="M${x1} ${y1} H${midX} V${y2} H${x2}" fill="none" stroke="rgba(79,195,247,0.4)" stroke-width="1.5"/>`;
                 });
@@ -2128,9 +2183,112 @@ Output ONLY this JSON:
         function showTab(name) {
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === name));
-            if (name === 'tables') requestAnimationFrame(() => requestAnimationFrame(drawBracketConnectors));
+            if (name === 'tables') requestAnimationFrame(() => requestAnimationFrame(() => drawBracketConnectorsIn(document.querySelector('#bracketFeed .bracket'), 'bm-')));
         }
-        window.addEventListener('resize', () => { if (typeof drawBracketConnectors === 'function') drawBracketConnectors(); });
+        window.addEventListener('resize', () => {
+            drawBracketConnectorsIn(document.querySelector('#bracketFeed .bracket'), 'bm-');
+            if (document.getElementById('presentMode') && document.getElementById('presentMode').style.display !== 'none' && PRESENT_PANELS[presentIndex] === 'bracket') scalePresentBracket();
+        });
+
+        // ---- Present / TV mode: fullscreen, auto-rotating display for the office screen ----
+        const PRESENT_PANELS = ['leaderboard', 'results', 'bracket'];
+        const PRESENT_MS = 20000;
+        let presentIndex = 0, presentTimer = null;
+
+        function enterPresentMode() {
+            presentIndex = 0;
+            const logo = document.getElementById('presentLogo'); if (logo) logo.innerHTML = TIDE_LOGO;
+            document.getElementById('presentMode').style.display = 'flex';
+            document.addEventListener('keydown', presentKeyHandler);
+            renderPresentPanel();
+            startPresentTimer();
+        }
+        function exitPresentMode() {
+            document.getElementById('presentMode').style.display = 'none';
+            clearTimeout(presentTimer); presentTimer = null;
+            document.removeEventListener('keydown', presentKeyHandler);
+        }
+        function presentStep(dir) {
+            presentIndex = (presentIndex + dir + PRESENT_PANELS.length) % PRESENT_PANELS.length;
+            renderPresentPanel();
+            startPresentTimer();
+        }
+        function startPresentTimer() {
+            clearTimeout(presentTimer);
+            const bar = document.getElementById('presentProgress');
+            if (bar) {
+                bar.style.transition = 'none';
+                bar.style.width = '0%';
+                void bar.offsetWidth; // force reflow so the next transition runs from 0
+                bar.style.transition = `width ${PRESENT_MS}ms linear`;
+                bar.style.width = '100%';
+            }
+            presentTimer = setTimeout(() => presentStep(1), PRESENT_MS);
+        }
+        function presentKeyHandler(e) {
+            if (e.key === 'Escape') exitPresentMode();
+            else if (e.key === 'ArrowRight') presentStep(1);
+            else if (e.key === 'ArrowLeft') presentStep(-1);
+        }
+        function renderPresentPanel() {
+            const stage = document.getElementById('presentStage');
+            const titleEl = document.getElementById('presentTitle');
+            const key = PRESENT_PANELS[presentIndex];
+            if (key === 'leaderboard') {
+                titleEl.textContent = 'Leaderboard';
+                stage.innerHTML = presentLeaderboardHtml();
+            } else if (key === 'results') {
+                const r = presentResults();
+                titleEl.textContent = r.label;
+                stage.innerHTML = r.html;
+            } else {
+                titleEl.textContent = 'Knockout bracket';
+                stage.innerHTML = `<div class="present-bracket-wrap"><div class="bracket"><svg class="bracket-lines" xmlns="http://www.w3.org/2000/svg"></svg>${buildBracketColumns('pbm-', { noRefresh: true })}</div></div>`;
+                requestAnimationFrame(() => requestAnimationFrame(scalePresentBracket));
+            }
+        }
+        function presentLeaderboardHtml() {
+            const scores = calculateScores();
+            const sorted = Object.entries(scores).sort((a, b) => b[1].total - a[1].total).map(([name, data], i) => ({ name, ...data, rank: i + 1 }));
+            const out = eliminatedCodes();
+            const awards = computeAwards();
+            return '<div class="present-lb">' + sorted.map(entry => {
+                const teams = appState.teamAssignments[entry.name] || [];
+                const flags = teams.map(t => flagWithStatus(t, { out: out.has(flagCodeFor(t)), size: 'w40' })).join('');
+                return `<div class="present-lb-row">
+                    <div class="present-lb-rank">${entry.rank}</div>
+                    <div class="present-lb-name">${entry.name}${awardBadgesFor(entry.name, awards)}</div>
+                    <div class="present-lb-flags">${flags}</div>
+                    <div class="present-lb-pts">${entry.total}</div>
+                </div>`;
+            }).join('') + '</div>';
+        }
+        function presentResults() {
+            const played = countableResults().filter(m => typeof m.home_score === 'number' && typeof m.away_score === 'number');
+            if (!played.length) return { label: 'Latest results', html: '<div class="present-empty">No results in yet — they\'ll show here once games are played.</div>' };
+            const byRound = {};
+            played.forEach(m => { const k = roundKeyOf(m); (byRound[k] = byRound[k] || []).push(m); });
+            const latestKey = ROUND_ORDER.filter(k => byRound[k] && byRound[k].length).pop();
+            const list = (byRound[latestKey] || []).slice().sort((a, b) => (a.kickoff_utc || '').localeCompare(b.kickoff_utc || ''));
+            const label = (ROUND_LABELS[latestKey] || 'Latest') + ' results';
+            return { label, html: `<div class="present-results-grid">${list.map(m => matchCardHtml(m)).join('')}</div>` };
+        }
+        function scalePresentBracket() {
+            const wrap = document.querySelector('#presentStage .present-bracket-wrap');
+            const br = wrap && wrap.querySelector('.bracket');
+            const stage = document.getElementById('presentStage');
+            if (!br || !stage) return;
+            br.style.transform = 'none';
+            drawBracketConnectorsIn(br, 'pbm-');
+            const natW = br.scrollWidth, natH = br.scrollHeight;
+            if (!natW || !natH) return;
+            const availW = stage.clientWidth - 24, availH = stage.clientHeight - 24;
+            const scale = Math.min(availW / natW, availH / natH, 1.6);
+            br.style.transformOrigin = 'top left';
+            br.style.transform = `scale(${scale})`;
+            wrap.style.width = (natW * scale) + 'px';
+            wrap.style.height = (natH * scale) + 'px';
+        }
 
         function showToast(message) {
             const toast = document.createElement('div');
