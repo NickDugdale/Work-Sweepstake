@@ -362,7 +362,6 @@
         <div class="present-stage" id="presentStage"></div>
         <button class="present-nav prev" onclick="presentStep(-1)" aria-label="Previous">‹</button>
         <button class="present-nav next" onclick="presentStep(1)" aria-label="Next">›</button>
-        <div class="present-progress"><div class="present-progress-bar" id="presentProgress"></div></div>
     </div>
 
     <div class="modal" id="settingsModal"><div class="modal-content"></div></div>
@@ -1510,10 +1509,11 @@
         }
         // Build the round columns HTML for a bracket. idPrefix keeps the Tables copy ('bm-') and
         // the Present copy ('pbm-') from sharing element ids.
-        function buildBracketColumns(idPrefix, opts) {
+        function buildBracketColumns(idPrefix, opts, roundsDef) {
             opts = opts || {};
+            const rounds = roundsDef || BRACKET_ROUNDS;
             const data = resolveBracket();
-            return BRACKET_ROUNDS.map(round => {
+            return rounds.map(round => {
                 const matches = round.nums.map(num => {
                     const d = data[num];
                     const hScore = d.played ? (d.flip ? d.aScore : d.hScore) : null;
@@ -2187,43 +2187,56 @@ Output ONLY this JSON:
         }
         window.addEventListener('resize', () => {
             drawBracketConnectorsIn(document.querySelector('#bracketFeed .bracket'), 'bm-');
-            if (document.getElementById('presentMode') && document.getElementById('presentMode').style.display !== 'none' && PRESENT_PANELS[presentIndex] === 'bracket') scalePresentBracket();
+            const pm = document.getElementById('presentMode');
+            if (pm && pm.style.display !== 'none' && String(PRESENT_PANELS[presentIndex]).startsWith('bracket')) scalePresentBracket();
+        });
+        // If the user leaves browser fullscreen (Esc/F11) while Present mode is open, close it too.
+        document.addEventListener('fullscreenchange', () => {
+            const pm = document.getElementById('presentMode');
+            if (!document.fullscreenElement && pm && pm.style.display !== 'none') exitPresentMode();
         });
 
-        // ---- Present / TV mode: fullscreen, auto-rotating display for the office screen ----
-        const PRESENT_PANELS = ['leaderboard', 'results', 'bracket'];
-        const PRESENT_MS = 20000;
-        let presentIndex = 0, presentTimer = null;
+        // ---- Present / TV mode: true-fullscreen, manually-advanced display for the office screen ----
+        const PRESENT_PANELS = ['leaderboard', 'results', 'bracket-top', 'bracket-bottom'];
+        // The official draw splits cleanly into two halves that each lead to one semi-final and the
+        // final, so each half-slide can show its 8 R32 ties at roughly double the size.
+        const BRACKET_HALVES = {
+            top: [
+                { key: 'ro32', label: 'Round of 32', nums: [74, 77, 73, 75, 83, 84, 81, 82] },
+                { key: 'ro16', label: 'Round of 16', nums: [89, 90, 93, 94] },
+                { key: 'qf', label: 'Quarter-finals', nums: [97, 98] },
+                { key: 'sf', label: 'Semi-final', nums: [101] },
+                { key: 'final', label: 'Final', nums: [104] }
+            ],
+            bottom: [
+                { key: 'ro32', label: 'Round of 32', nums: [76, 78, 79, 80, 86, 88, 85, 87] },
+                { key: 'ro16', label: 'Round of 16', nums: [91, 92, 95, 96] },
+                { key: 'qf', label: 'Quarter-finals', nums: [99, 100] },
+                { key: 'sf', label: 'Semi-final', nums: [102] },
+                { key: 'final', label: 'Final', nums: [104] }
+            ]
+        };
+        let presentIndex = 0;
 
         function enterPresentMode() {
             presentIndex = 0;
             const logo = document.getElementById('presentLogo'); if (logo) logo.innerHTML = TIDE_LOGO;
             document.getElementById('presentMode').style.display = 'flex';
             document.addEventListener('keydown', presentKeyHandler);
+            const el = document.documentElement;
+            if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
             renderPresentPanel();
-            startPresentTimer();
         }
         function exitPresentMode() {
-            document.getElementById('presentMode').style.display = 'none';
-            clearTimeout(presentTimer); presentTimer = null;
+            const pm = document.getElementById('presentMode');
+            if (!pm || pm.style.display === 'none') return; // already closed (idempotent)
+            pm.style.display = 'none';
             document.removeEventListener('keydown', presentKeyHandler);
+            if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
         }
         function presentStep(dir) {
             presentIndex = (presentIndex + dir + PRESENT_PANELS.length) % PRESENT_PANELS.length;
             renderPresentPanel();
-            startPresentTimer();
-        }
-        function startPresentTimer() {
-            clearTimeout(presentTimer);
-            const bar = document.getElementById('presentProgress');
-            if (bar) {
-                bar.style.transition = 'none';
-                bar.style.width = '0%';
-                void bar.offsetWidth; // force reflow so the next transition runs from 0
-                bar.style.transition = `width ${PRESENT_MS}ms linear`;
-                bar.style.width = '100%';
-            }
-            presentTimer = setTimeout(() => presentStep(1), PRESENT_MS);
         }
         function presentKeyHandler(e) {
             if (e.key === 'Escape') exitPresentMode();
@@ -2242,8 +2255,9 @@ Output ONLY this JSON:
                 titleEl.textContent = r.label;
                 stage.innerHTML = r.html;
             } else {
-                titleEl.textContent = 'Knockout bracket';
-                stage.innerHTML = `<div class="present-bracket-wrap"><div class="bracket"><svg class="bracket-lines" xmlns="http://www.w3.org/2000/svg"></svg>${buildBracketColumns('pbm-', { noRefresh: true })}</div></div>`;
+                const half = key === 'bracket-top' ? 'top' : 'bottom';
+                titleEl.textContent = 'Knockout bracket — ' + half + ' half';
+                stage.innerHTML = `<div class="present-bracket-wrap"><div class="bracket"><svg class="bracket-lines" xmlns="http://www.w3.org/2000/svg"></svg>${buildBracketColumns('pbm-', { noRefresh: true }, BRACKET_HALVES[half])}</div></div>`;
                 requestAnimationFrame(() => requestAnimationFrame(scalePresentBracket));
             }
         }
