@@ -134,6 +134,22 @@
         .fixture-ko { font-size: 0.78rem; color: #7DB8D8; white-space: nowrap; flex: 0 0 auto; }
         .empty-note { font-size: 0.9rem; color: #7DB8D8; line-height: 1.6; }
         .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; }
+        /* Knockout bracket */
+        .bracket { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 0.75rem; align-items: stretch; }
+        .bracket-round { display: flex; flex-direction: column; min-width: 168px; flex: 0 0 auto; }
+        .bracket-round-label { font-family: 'Outfit', sans-serif; font-weight: 600; color: #4FC3F7; font-size: 0.8rem; text-align: center; margin-bottom: 0.85rem; position: sticky; top: 0; }
+        .bracket-matches { display: flex; flex-direction: column; justify-content: space-around; flex: 1; gap: 0.6rem; }
+        .bracket-match { background: rgba(0,0,0,0.22); border: 1px solid rgba(79,195,247,0.12); border-radius: 8px; overflow: hidden; }
+        .bracket-match.done { border-color: rgba(79,195,247,0.3); }
+        .bracket-side { display: flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.55rem; font-size: 0.78rem; color: #C9E3F2; }
+        .bracket-side + .bracket-side { border-top: 1px solid rgba(79,195,247,0.1); }
+        .bracket-side img { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; flex: 0 0 auto; }
+        .bracket-noflag { width: 20px; height: 14px; border-radius: 2px; background: rgba(79,195,247,0.12); flex: 0 0 auto; }
+        .bracket-team { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bracket-side.tbd .bracket-team { color: #6F93AA; font-style: italic; font-size: 0.72rem; }
+        .bracket-side.win { color: #fff; font-weight: 700; background: rgba(79,195,247,0.1); }
+        .bracket-score { font-weight: 700; color: #4FC3F7; margin-left: auto; padding-left: 0.4rem; }
+        @media (max-width: 600px) { .bracket-round { min-width: 150px; } }
         .group-table { background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 12px; padding: 1rem 1.25rem; }
         .group-title { font-family: 'Outfit', sans-serif; font-weight: 600; color: #4FC3F7; margin-bottom: 0.75rem; font-size: 1rem; }
         .group-table table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -260,6 +276,10 @@
                     <div class="card" id="groupsCard">
                         <h2>Group Stage</h2>
                         <div id="groupsFeed"></div>
+                    </div>
+                    <div class="card" id="bracketCard">
+                        <h2>Knockout Bracket</h2>
+                        <div id="bracketFeed"></div>
                     </div>
                 </div>
 
@@ -875,6 +895,7 @@
             renderLeaderboard();
             renderResults();
             renderGroups();
+            renderBracket();
             renderNews();
         }
 
@@ -1220,6 +1241,134 @@
                     </table>
                 </div>`;
             }).join('') + '</div>';
+        }
+
+        // ---- Official 2026 World Cup knockout bracket (verified from FIFA / Wikipedia) ----
+        // Each side is a slot: {w|ru group} = winner/runner-up of a group; {3:'A/B/..'} = a
+        // best-third-placed slot (stays a label until groups finish); {m:NN} = winner of match NN.
+        const BRACKET = {
+            73: { h: { ru: 'A' }, a: { ru: 'B' } },
+            74: { h: { w: 'E' }, a: { 3: 'A/B/C/D/F' } },
+            75: { h: { w: 'F' }, a: { ru: 'C' } },
+            76: { h: { w: 'C' }, a: { ru: 'F' } },
+            77: { h: { w: 'I' }, a: { 3: 'C/D/F/G/H' } },
+            78: { h: { ru: 'E' }, a: { ru: 'I' } },
+            79: { h: { w: 'A' }, a: { 3: 'C/E/F/H/I' } },
+            80: { h: { w: 'L' }, a: { 3: 'E/H/I/J/K' } },
+            81: { h: { w: 'D' }, a: { 3: 'B/E/F/I/J' } },
+            82: { h: { w: 'G' }, a: { 3: 'A/E/H/I/J' } },
+            83: { h: { ru: 'K' }, a: { ru: 'L' } },
+            84: { h: { w: 'H' }, a: { ru: 'J' } },
+            85: { h: { w: 'B' }, a: { 3: 'E/F/G/I/J' } },
+            86: { h: { w: 'J' }, a: { ru: 'H' } },
+            87: { h: { w: 'K' }, a: { 3: 'D/E/I/J/L' } },
+            88: { h: { ru: 'D' }, a: { ru: 'G' } },
+            89: { h: { m: 74 }, a: { m: 77 } },
+            90: { h: { m: 73 }, a: { m: 75 } },
+            91: { h: { m: 76 }, a: { m: 78 } },
+            92: { h: { m: 79 }, a: { m: 80 } },
+            93: { h: { m: 83 }, a: { m: 84 } },
+            94: { h: { m: 81 }, a: { m: 82 } },
+            95: { h: { m: 86 }, a: { m: 88 } },
+            96: { h: { m: 85 }, a: { m: 87 } },
+            97: { h: { m: 89 }, a: { m: 90 } },
+            98: { h: { m: 93 }, a: { m: 94 } },
+            99: { h: { m: 91 }, a: { m: 92 } },
+            100: { h: { m: 95 }, a: { m: 96 } },
+            101: { h: { m: 97 }, a: { m: 98 } },
+            102: { h: { m: 99 }, a: { m: 100 } },
+            104: { h: { m: 101 }, a: { m: 102 } }
+        };
+        // Rounds in display order. R32 ordered so each R16 match sits between its two feeders;
+        // top half of the draw first, then the bottom half.
+        const BRACKET_ROUNDS = [
+            { key: 'ro32', label: 'Round of 32', nums: [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87] },
+            { key: 'ro16', label: 'Round of 16', nums: [89, 90, 93, 94, 91, 92, 95, 96] },
+            { key: 'qf', label: 'Quarter-finals', nums: [97, 98, 99, 100] },
+            { key: 'sf', label: 'Semi-finals', nums: [101, 102] },
+            { key: 'final', label: 'Final', nums: [104] }
+        ];
+
+        function groupRankTeam(letter, idx) {
+            const g = (appState.groups || []).find(x => String(x.group) === letter);
+            if (!g || !Array.isArray(g.standings) || !g.standings.length) return null;
+            const s = g.standings.slice().sort((a, b) => (b.points - a.points) || (b.gd - a.gd) || ((b.gf || 0) - (a.gf || 0)));
+            return s[idx] ? s[idx].team : null;
+        }
+        // Find a stored knockout result between two teams at a given stage.
+        function koResultBetween(stage, teamA, teamB) {
+            if (!teamA || !teamB) return null;
+            const a = flagCodeFor(teamA), b = flagCodeFor(teamB);
+            return (appState.results || []).find(m => (m.stage || '').toLowerCase() === stage &&
+                ((flagCodeFor(m.home_team) === a && flagCodeFor(m.away_team) === b) ||
+                 (flagCodeFor(m.home_team) === b && flagCodeFor(m.away_team) === a))) || null;
+        }
+        function koWinnerName(res) {
+            if (!res || typeof res.home_score !== 'number' || typeof res.away_score !== 'number') return null;
+            if (res.home_score > res.away_score) return res.home_team;
+            if (res.away_score > res.home_score) return res.away_team;
+            if (res.penalties_winner) return res.penalties_winner;
+            return null;
+        }
+
+        // Resolve the whole bracket. Winners propagate forward as later rounds' feeders resolve.
+        function resolveBracket() {
+            const out = {};
+            const winnerOf = {};
+            const resolveSide = side => {
+                if (side.w) return { team: groupRankTeam(side.w, 0), label: 'Winner ' + side.w };
+                if (side.ru) return { team: groupRankTeam(side.ru, 1), label: 'Runner-up ' + side.ru };
+                if (side[3]) return { team: null, label: '3rd: ' + side[3] };
+                if (side.m) return { team: winnerOf[side.m] || null, label: 'Winner M' + side.m };
+                return { team: null, label: '' };
+            };
+            BRACKET_ROUNDS.forEach(round => {
+                round.nums.forEach(num => {
+                    const def = BRACKET[num];
+                    const home = resolveSide(def.h);
+                    const away = resolveSide(def.a);
+                    const res = koResultBetween(round.key, home.team, away.team);
+                    const win = koWinnerName(res);
+                    if (win) winnerOf[num] = win;
+                    out[num] = {
+                        home, away,
+                        hScore: res ? res.home_score : null,
+                        aScore: res ? res.away_score : null,
+                        flip: res ? flagCodeFor(res.home_team) !== flagCodeFor(home.team) : false,
+                        winner: win, played: !!res
+                    };
+                });
+            });
+            return out;
+        }
+
+        function bracketSideHtml(side, scoreVal, isWinner) {
+            const name = side.team || side.label;
+            const flag = side.team ? flagImg(side.team, '', 'w20') : '<span class="bracket-noflag"></span>';
+            const sc = (scoreVal != null) ? `<span class="bracket-score">${scoreVal}</span>` : '';
+            return `<div class="bracket-side${isWinner ? ' win' : ''}${side.team ? '' : ' tbd'}">${flag}<span class="bracket-team">${name}</span>${sc}</div>`;
+        }
+        function renderBracket() {
+            const card = document.getElementById('bracketCard');
+            const feed = document.getElementById('bracketFeed');
+            if (!feed) return;
+            const data = resolveBracket();
+            card.style.display = 'block';
+            const cols = BRACKET_ROUNDS.map(round => {
+                const matches = round.nums.map(num => {
+                    const d = data[num];
+                    const hScore = d.played ? (d.flip ? d.aScore : d.hScore) : null;
+                    const aScore = d.played ? (d.flip ? d.hScore : d.aScore) : null;
+                    const hWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.home.team);
+                    const aWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.away.team);
+                    return `<div class="bracket-match${d.played ? ' done' : ''}">
+                        ${bracketSideHtml(d.home, hScore, hWin)}
+                        ${bracketSideHtml(d.away, aScore, aWin)}
+                    </div>`;
+                }).join('');
+                return `<div class="bracket-round"><div class="bracket-round-label">${round.label}</div><div class="bracket-matches">${matches}</div></div>`;
+            }).join('');
+            feed.innerHTML = `<p class="info-text" style="margin-bottom:0.85rem;">Official bracket. Group winners and runners-up fill in from the standings; third-placed slots and later rounds resolve as games are played. Scroll sideways to see all rounds. ⟶</p><div class="bracket">${cols}</div>`;
         }
 
         const STAGE_ORDER = ['group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
