@@ -56,15 +56,18 @@
         .scoring-item { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0.75rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(79,195,247,0.1); border-radius: 8px; font-size: 0.85rem; color: #C9E3F2; }
         .scoring-pts { color: #4FC3F7; font-weight: 700; white-space: nowrap; }
         .brand { display: flex; align-items: center; gap: 0.7rem; }
-        .tide-logo-chip { width: 38px; height: 38px; border-radius: 9px; overflow: hidden; background: #fff; flex: 0 0 auto; }
-        .tide-logo-chip svg { width: 100%; height: 100%; display: block; }
+        .tide-logo-chip { height: 48px; display: inline-flex; align-items: center; flex: 0 0 auto; }
+        .tide-logo-chip svg { height: 100%; width: auto; display: block; }
+        .prize-banner { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; margin-bottom: 1rem; text-align: center; }
+        .prize-tag { background: linear-gradient(180deg, #F2CE4B, #E0A911); color: #3a2c00; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 0.98rem; padding: 0.5rem 1.15rem; border-radius: 999px; border: 1px solid #c79a12; box-shadow: 0 2px 8px rgba(224,169,17,0.25); letter-spacing: 0.2px; }
+        .prize-fine { color: #7DB8D8; font-size: 0.7rem; font-style: italic; opacity: 0.85; max-width: 540px; line-height: 1.3; }
         .present-bar { margin-bottom: 1rem; display: flex; }
         .present-btn { background: #4FC3F7; color: #062138; border: none; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 1rem; padding: 0.7rem 1.4rem; border-radius: 10px; cursor: pointer; }
         .present-btn:hover { background: #6fd0fb; }
         .present-overlay { position: fixed; inset: 0; background: #0B1F33; z-index: 2000; flex-direction: column; padding: 1.5rem 2rem 2.5rem; }
         .present-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
         .present-header h2 { font-family: 'Outfit', sans-serif; font-size: 2rem; color: #fff; margin: 0; flex: 1; }
-        .present-logo { width: 52px; height: 52px; border-radius: 12px; }
+        .present-logo { height: 64px; }
         .present-close { background: #E2483D; color: #fff; border: none; width: 46px; height: 46px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; line-height: 1; flex: 0 0 auto; }
         .present-close:hover { background: #c93529; }
         .present-stage { flex: 1; overflow: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -311,6 +314,10 @@
 
                 <div class="tab-panel active" data-panel="leaderboard">
                     <div id="updateBubble" class="update-bubble" style="display: none;"></div>
+                    <div class="prize-banner">
+                        <span class="prize-tag">🏆 Grand Prize: Louis Vuitton Bag*</span>
+                        <span class="prize-fine">*Subject to availability. Authenticity not guaranteed. Bag may in fact be a tote from the kitchen drawer.</span>
+                    </div>
                     <div class="present-bar">
                         <button class="present-btn" onclick="enterPresentMode()">📺 Present mode</button>
                     </div>
@@ -719,7 +726,7 @@
             IS_VIEWER = !!VIEW_BIN_ID;
         }
 
-        const TIDE_LOGO = '<svg viewBox="0 0 554 554" xmlns="http://www.w3.org/2000/svg"><rect width="554" height="554" fill="#fff"/><path fill="#051f42" d="M411.2,291.1v-15.3h-40.8v-17.6h35.8v-14.8h-35.8v-16.2h39.9v-15.3h-58.4v79.1h59.3ZM277.9,227.2h10.8c13.7,0,22.4,6.5,22.4,23.2v2.2c0,16.7-8.7,23.2-22.4,23.2h-10.8v-48.6h0ZM289.9,291.1c24.2,0,40.8-13.7,40.8-38.5v-2.2c0-24.7-16.6-38.5-40.8-38.5h-30.4v79.1h30.4ZM228.8,211.9h-19v79.1h19v-79.1h0ZM161.6,291.1v-63.9h21.7v-15.3h-62.4v15.3h21.8v63.9h18.9Z"/><path fill="#36a9e1" d="M411.2,321.7c-89.5-15.4-179,15.4-268.4,0v-11.7h268.4v11.7Z"/><path fill="#051f42" d="M411.2,342.1H142.8v-11.7c89.5,15.4,179-15.4,268.4,0v11.7Z"/></svg>';
+        const TIDE_LOGO = '<svg viewBox="113 204 305 146" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M411.2,291.1v-15.3h-40.8v-17.6h35.8v-14.8h-35.8v-16.2h39.9v-15.3h-58.4v79.1h59.3ZM277.9,227.2h10.8c13.7,0,22.4,6.5,22.4,23.2v2.2c0,16.7-8.7,23.2-22.4,23.2h-10.8v-48.6h0ZM289.9,291.1c24.2,0,40.8-13.7,40.8-38.5v-2.2c0-24.7-16.6-38.5-40.8-38.5h-30.4v79.1h30.4ZM228.8,211.9h-19v79.1h19v-79.1h0ZM161.6,291.1v-63.9h21.7v-15.3h-62.4v15.3h21.8v63.9h18.9Z"/><path fill="#36a9e1" d="M411.2,321.7c-89.5-15.4-179,15.4-268.4,0v-11.7h268.4v11.7Z"/><path fill="#fff" d="M411.2,342.1H142.8v-11.7c89.5,15.4,179-15.4,268.4,0v11.7Z"/></svg>';
 
         function initializeApp() {
             detectMode();
@@ -989,11 +996,8 @@
             const moves = appState.lastSyncMoves || [];
             const when = appState.lastSyncTime ? new Date(appState.lastSyncTime).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
             if (!appState.lastSyncTime) { el.style.display = 'none'; return; }
+            if (moves.length === 0) { el.style.display = 'none'; return; }
             el.style.display = 'block';
-            if (moves.length === 0) {
-                el.innerHTML = `<span class="ub-label">Latest update${when ? ' · ' + when : ''}</span>No position changes in the last sync.`;
-                return;
-            }
             const shown = moves.slice(0, 3).map(m => m.summary).join(' ');
             const extra = moves.length > 3 ? ` <strong>+${moves.length - 3} more</strong>` : '';
             el.innerHTML = `<span class="ub-label">Latest update${when ? ' · ' + when : ''}</span>${shown}${extra}`;
