@@ -189,7 +189,9 @@
         .bracket-side + .bracket-side { border-top: 1px solid rgba(79,195,247,0.1); }
         .bracket-side img { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; flex: 0 0 auto; }
         .bracket-noflag { width: 20px; height: 14px; border-radius: 2px; background: rgba(79,195,247,0.12); flex: 0 0 auto; }
-        .bracket-team { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bracket-team { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .bracket-country { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bracket-owner { font-size: 0.6rem; line-height: 1; color: #9FD4F0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .bracket-side.tbd .bracket-team { color: #6F93AA; font-style: italic; font-size: 0.72rem; }
         .bracket-side.win { color: #fff; font-weight: 700; background: rgba(79,195,247,0.1); }
         .bracket-score { font-weight: 700; color: #4FC3F7; margin-left: auto; padding-left: 0.4rem; }
@@ -306,8 +308,8 @@
                 <div class="viewer-banner" id="viewerBanner" style="display: none;"></div>
                 <div class="tab-bar" id="tabBar">
                     <button class="tab active" data-tab="leaderboard" onclick="showTab('leaderboard')">🏆 Leaderboard</button>
-                    <button class="tab" data-tab="results" onclick="showTab('results')">⚽ Match Results</button>
-                    <button class="tab" data-tab="tables" onclick="showTab('tables')">📊 Tables</button>
+                    <button class="tab" data-tab="bracket" onclick="showTab('bracket')">🥊 Knockout Bracket</button>
+                    <button class="tab" data-tab="groups" onclick="showTab('groups')">⚽ Group Stage</button>
                     <button class="tab" data-tab="news" onclick="showTab('news')">📰 News</button>
                     <button class="tab" data-tab="scoring" onclick="showTab('scoring')">🧮 Scoring</button>
                 </div>
@@ -327,20 +329,25 @@
                     </div>
                 </div>
 
-                <div class="tab-panel" data-panel="results">
-                    <div class="card">
-                        <div id="resultsFeed"></div>
-                    </div>
-                </div>
-
-                <div class="tab-panel" data-panel="tables">
-                    <div class="card" id="groupsCard">
-                        <h2>Group Stage</h2>
-                        <div id="groupsFeed"></div>
-                    </div>
+                <div class="tab-panel" data-panel="bracket">
                     <div class="card" id="bracketCard">
                         <h2>Knockout Bracket</h2>
                         <div id="bracketFeed"></div>
+                    </div>
+                    <div class="card" id="koResultsCard">
+                        <h2>Knockout Results &amp; Fixtures</h2>
+                        <div id="koResultsFeed"></div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" data-panel="groups">
+                    <div class="card" id="groupsCard">
+                        <h2>Group Tables</h2>
+                        <div id="groupsFeed"></div>
+                    </div>
+                    <div class="card" id="groupResultsCard">
+                        <h2>Group Stage Results</h2>
+                        <div id="groupResultsFeed"></div>
                     </div>
                 </div>
 
@@ -974,7 +981,8 @@
         function updateDashboard() {
             renderUpdateBubble();
             renderLeaderboard();
-            renderResults();
+            renderGroupResults();
+            renderKnockoutResults();
             renderGroups();
             renderBracket();
             renderNews();
@@ -1272,7 +1280,7 @@
 
         const ROUND_ORDER = ['md1', 'md2', 'md3', 'group', 'ro32', 'ro16', 'qf', 'sf', 'final'];
         const ROUND_LABELS = { md1: 'Matchday 1', md2: 'Matchday 2', md3: 'Matchday 3', group: 'Group Stage', ro32: 'Round of 32', ro16: 'Round of 16', qf: 'Quarter-finals', sf: 'Semi-finals', final: 'Final' };
-        let openResultsKey; // undefined = not yet initialised; null = all collapsed
+        let openGroupKey, openKoKey; // accordion open-state per results section
         function roundKeyOf(m) {
             const st = (m.stage || 'group').toLowerCase();
             if (st === 'group') {
@@ -1281,88 +1289,82 @@
             }
             return ROUND_ORDER.includes(st) ? st : 'group';
         }
-        function toggleResultsSection(key) { openResultsKey = (openResultsKey === key) ? null : key; renderResults(); }
+        function toggleGroupResults(key) { openGroupKey = (openGroupKey === key) ? null : key; renderGroupResults(); }
+        function toggleKoResults(key) { openKoKey = (openKoKey === key) ? null : key; renderKnockoutResults(); }
 
-        function renderResults() {
-            const feed = document.getElementById('resultsFeed');
-            const now = Date.now();
-            const results = countableResults().slice();
-
-            // Upcoming fixtures that haven't been played. Drop any that we already have a
-            // result for (same teams + stage), so a game never shows as both played and to-play.
-            const resultSigs = new Set(results.map(m => gameSig(m, 'result')));
-            const upcoming = (appState.upcoming || [])
-                .filter(m => m && (m.home_team || m.away_team || m.home_slot || m.away_slot))
-                .filter(m => !(m.home_team && m.away_team) || !resultSigs.has(gameSig(m, 'result')));
-
-            // Assign a matchday (1/2/3) to every group match — results AND upcoming — by ordering
-            // the distinct match dates within each group. Uses the API's matchday when present.
+        // Assign a matchday (1/2/3) to each group game by ordering the distinct dates per group.
+        function assignMatchdays(list) {
             const gmap = teamGroupMap();
             const buckets = {};
-            [...results, ...upcoming].forEach(m => {
+            list.forEach(m => {
                 if ((m.stage || 'group').toLowerCase() !== 'group') return;
                 const grp = gmap[flagCodeFor(m.home_team)] || gmap[flagCodeFor(m.away_team)] || '?';
                 (buckets[grp] = buckets[grp] || []).push(m);
             });
-            Object.values(buckets).forEach(list => {
-                const days = [...new Set(list.map(m => (m.kickoff_utc || '').slice(0, 10)).filter(Boolean))].sort();
-                list.forEach(m => {
+            Object.values(buckets).forEach(games => {
+                const days = [...new Set(games.map(m => (m.kickoff_utc || '').slice(0, 10)).filter(Boolean))].sort();
+                games.forEach(m => {
                     const apiMd = parseInt(m.matchday, 10);
                     if (apiMd >= 1 && apiMd <= 3) { m._md = apiMd; return; }
                     const idx = days.indexOf((m.kickoff_utc || '').slice(0, 10));
                     m._md = idx >= 0 ? Math.min(3, idx + 1) : 1;
                 });
             });
+        }
 
-            // Group both lists by round key. Upcoming fixtures are only kept for the group
-            // matchdays — knockout predictions now live on the bracket (Tables tab), so they're
-            // dropped here to avoid duplicating it.
-            const resByKey = {}, upByKey = {};
-            results.forEach(m => { const k = roundKeyOf(m); (resByKey[k] = resByKey[k] || []).push(m); });
-            upcoming.forEach(m => { const k = roundKeyOf(m); if (['md1', 'md2', 'md3'].includes(k)) (upByKey[k] = upByKey[k] || []).push(m); });
-
-            // Matchdays always show; knockout rounds only once they're reachable (no empty
-            // Quarter-finals bubble during the group stage). A round shows if it has anything.
-            const allowed = allowedStages();
-            const koOk = k => ['md1', 'md2', 'md3', 'group'].includes(k) || allowed.includes(k);
-            const present = ROUND_ORDER.filter(k => koOk(k) &&
-                ((resByKey[k] && resByKey[k].length) || (upByKey[k] && upByKey[k].length)));
-
-            if (present.length === 0) {
-                feed.innerHTML = '<p class="empty-note">🏟️ No fixtures or results yet. Click "Sync Latest" to pull the schedule.</p>';
-                return;
-            }
-
-            // Default-open the latest round that has results; if nothing's been played, open the first.
+        // Shared collapsible accordion for a results feed (one round per bubble).
+        function renderResultsAccordion(feedId, orderedKeys, resByKey, upByKey, openKey, toggleFn, emptyMsg) {
+            const feed = document.getElementById(feedId);
+            if (!feed) return openKey;
+            const present = orderedKeys.filter(k => (resByKey[k] && resByKey[k].length) || (upByKey[k] && upByKey[k].length));
+            if (!present.length) { feed.innerHTML = `<p class="empty-note">${emptyMsg}</p>`; return openKey; }
             const withResults = present.filter(k => resByKey[k] && resByKey[k].length);
             const fallbackOpen = withResults.length ? withResults[withResults.length - 1] : present[0];
-            if (openResultsKey === undefined) openResultsKey = fallbackOpen;
-            else if (openResultsKey !== null && !present.includes(openResultsKey)) openResultsKey = fallbackOpen;
-
+            if (openKey === undefined) openKey = fallbackOpen;
+            else if (openKey !== null && !present.includes(openKey)) openKey = fallbackOpen;
             feed.innerHTML = present.map(k => {
                 const res = (resByKey[k] || []).slice().sort((a, b) => (Date.parse(a.kickoff_utc) || 0) - (Date.parse(b.kickoff_utc) || 0));
                 const up = (upByKey[k] || []).slice().sort((a, b) => (Date.parse(a.kickoff_utc) || Infinity) - (Date.parse(b.kickoff_utc) || Infinity));
-                const isOpen = openResultsKey === k;
+                const isOpen = openKey === k;
                 let body = '';
                 if (res.length) body += res.map(m => matchCardHtml(m, {})).join('');
                 if (up.length) {
                     body += `<div class="round-divider">${res.length ? 'Still to play' : 'Upcoming'}</div>`;
-                    const known = up.filter(m => m.home_team && m.away_team);
-                    const undecided = up.filter(m => !m.home_team || !m.away_team);
-                    if (known.length) body += '<div class="fixture-rows">' + known.map(fixtureRowHtml).join('') + '</div>';
-                    if (undecided.length) {
-                        body += '<p class="empty-note" style="margin:0.75rem 0;">❓ = not yet decided. "Likely" is the current standings leader for that slot and may still change.</p>';
-                        body += undecided.map(fixtureCardHtml).join('');
-                    }
+                    body += up.map(m => matchCardHtml(m, { upcoming: true })).join('');
                 }
                 return `<div class="result-section">
-                    <button class="result-section-header${isOpen ? ' open' : ''}" onclick="toggleResultsSection('${k}')">
+                    <button class="result-section-header${isOpen ? ' open' : ''}" onclick="${toggleFn}('${k}')">
                         <span>${ROUND_LABELS[k]}</span>
                         <span class="result-chevron">${isOpen ? '▾' : '▸'}</span>
                     </button>
                     ${isOpen ? `<div class="result-section-body">${body}</div>` : ''}
                 </div>`;
             }).join('');
+            return openKey;
+        }
+
+        // Group Stage tab: completed group games only, by matchday.
+        function renderGroupResults() {
+            const results = countableResults().filter(m => (m.stage || 'group').toLowerCase() === 'group');
+            assignMatchdays(results);
+            const resByKey = {};
+            results.forEach(m => { const k = roundKeyOf(m); (resByKey[k] = resByKey[k] || []).push(m); });
+            openGroupKey = renderResultsAccordion('groupResultsFeed', ['md1', 'md2', 'md3'], resByKey, {}, openGroupKey, 'toggleGroupResults', '🏟️ No group results yet.');
+        }
+
+        // Knockout Bracket tab: knockout games by round, with date + UK kick-off time and score.
+        function renderKnockoutResults() {
+            const koStages = ['ro32', 'ro16', 'qf', 'sf', 'final'];
+            const results = countableResults().filter(m => koStages.includes((m.stage || '').toLowerCase()));
+            const resultSigs = new Set(results.map(m => gameSig(m, 'result')));
+            const upcoming = (appState.upcoming || []).filter(m =>
+                m && m.home_team && m.away_team &&
+                koStages.includes((m.stage || '').toLowerCase()) &&
+                !resultSigs.has(gameSig(m, 'result')));
+            const resByKey = {}, upByKey = {};
+            results.forEach(m => { const k = roundKeyOf(m); (resByKey[k] = resByKey[k] || []).push(m); });
+            upcoming.forEach(m => { const k = roundKeyOf(m); (upByKey[k] = upByKey[k] || []).push(m); });
+            openKoKey = renderResultsAccordion('koResultsFeed', koStages, resByKey, upByKey, openKoKey, 'toggleKoResults', "🥊 No knockout games yet — they'll appear here as the Round of 32 begins.");
         }
 
         function renderGroups() {
@@ -1551,11 +1553,13 @@
             return out;
         }
 
-        function bracketSideHtml(side, scoreVal, isWinner) {
+        function bracketSideHtml(side, scoreVal, isWinner, owners) {
             const name = side.team || side.label;
             const flag = side.team ? flagImg(side.team, '', 'w20') : '<span class="bracket-noflag"></span>';
             const sc = (scoreVal != null) ? `<span class="bracket-score">${scoreVal}</span>` : '';
-            return `<div class="bracket-side${isWinner ? ' win' : ''}${side.team ? '' : ' tbd'}">${flag}<span class="bracket-team">${name}</span>${sc}</div>`;
+            const owner = (side.team && owners) ? owners[flagCodeFor(side.team)] : null;
+            const ownerTag = owner ? `<span class="bracket-owner">${owner}</span>` : '';
+            return `<div class="bracket-side${isWinner ? ' win' : ''}${side.team ? '' : ' tbd'}">${flag}<span class="bracket-team"><span class="bracket-country">${name}</span>${ownerTag}</span>${sc}</div>`;
         }
         // Build the round columns HTML for a bracket. idPrefix keeps the Tables copy ('bm-') and
         // the Present copy ('pbm-') from sharing element ids.
@@ -1563,6 +1567,7 @@
             opts = opts || {};
             const rounds = roundsDef || BRACKET_ROUNDS;
             const data = resolveBracket();
+            const owners = ownerByTeamCode();
             return rounds.map(round => {
                 const matches = round.nums.map(num => {
                     const d = data[num];
@@ -1571,8 +1576,8 @@
                     const hWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.home.team);
                     const aWin = d.winner && flagCodeFor(d.winner) === flagCodeFor(d.away.team);
                     return `<div class="bracket-match${d.played ? ' done' : ''}" id="${idPrefix}${num}">
-                        ${bracketSideHtml(d.home, hScore, hWin)}
-                        ${bracketSideHtml(d.away, aScore, aWin)}
+                        ${bracketSideHtml(d.home, hScore, hWin, owners)}
+                        ${bracketSideHtml(d.away, aScore, aWin, owners)}
                     </div>`;
                 }).join('');
                 const refresh = opts.noRefresh ? '' : `<button class="mini-sync" title="Refresh ${round.label}" onclick="syncRound('${round.key}', '${round.label}', this)">↻</button>`;
@@ -2233,7 +2238,7 @@ Output ONLY this JSON:
         function showTab(name) {
             document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
             document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.dataset.panel === name));
-            if (name === 'tables') requestAnimationFrame(() => requestAnimationFrame(() => drawBracketConnectorsIn(document.querySelector('#bracketFeed .bracket'), 'bm-')));
+            if (name === 'bracket') requestAnimationFrame(() => requestAnimationFrame(() => drawBracketConnectorsIn(document.querySelector('#bracketFeed .bracket'), 'bm-')));
         }
         window.addEventListener('resize', () => {
             drawBracketConnectorsIn(document.querySelector('#bracketFeed .bracket'), 'bm-');
