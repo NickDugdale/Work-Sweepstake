@@ -1501,22 +1501,31 @@
             return g ? slotStr.split('/').map(s => s.trim()).includes(g) : false;
         }
 
+        // Official allocation of the eight best third-placed teams for THIS tournament: the
+        // qualifying thirds came from groups B, D, E, F, I, J, K, L, and FIFA's combinations table
+        // slots them as below (R32 match number -> the group whose 3rd-placed team plays there).
+        const THIRD_SLOT_GROUP = { 74: 'D', 77: 'F', 79: 'E', 80: 'K', 81: 'B', 82: 'I', 85: 'J', 87: 'L' };
+
         function resolveBracket() {
             const out = {};
             const winnerOf = {};
-            const resolveSide = side => {
+            const resolveSide = (side, num) => {
                 if (side.w) return { team: groupRankTeam(side.w, 0), label: 'Winner ' + side.w };
                 if (side.ru) return { team: groupRankTeam(side.ru, 1), label: 'Runner-up ' + side.ru };
-                if (side[3]) return { team: null, label: '3rd: ' + side[3] };
+                if (side[3]) {
+                    const tg = THIRD_SLOT_GROUP[num];
+                    return { team: tg ? groupRankTeam(tg, 2) : null, label: tg ? '3rd of Group ' + tg : '3rd: ' + side[3] };
+                }
                 if (side.m) return { team: winnerOf[side.m] || null, label: 'Winner M' + side.m };
                 return { team: null, label: '' };
             };
             BRACKET_ROUNDS.forEach(round => {
                 round.nums.forEach(num => {
                     const def = BRACKET[num];
-                    let home = resolveSide(def.h);
-                    let away = resolveSide(def.a);
-                    // Fill a best-third-placed slot from the real fixture, anchored on the known side.
+                    let home = resolveSide(def.h, num);
+                    let away = resolveSide(def.a, num);
+                    // Safety net: if a third-place slot is still unresolved (group standings not in
+                    // yet), infer it from the actual fetched R32 fixture via the known side.
                     if (round.key === 'ro32') {
                         if (def.h[3] && !home.team && away.team) {
                             const opp = actualKoOpponent(away.team, 'ro32');
