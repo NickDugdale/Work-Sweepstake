@@ -318,7 +318,7 @@
                     <div id="updateBubble" class="update-bubble" style="display: none;"></div>
                     <div class="prize-banner">
                         <span class="prize-tag">🏆 Grand Prize: Louis Vuitton Bag*</span>
-                        <span class="prize-fine">*Subject to availability. Authenticity not guaranteed.</span>
+                        <span class="prize-fine">*Subject to availability. Authenticity not guaranteed. Bag may in fact be a tote from the kitchen drawer.</span>
                     </div>
                     <div class="present-bar">
                         <button class="present-btn" onclick="enterPresentMode()">📺 Present mode</button>
@@ -1454,7 +1454,18 @@
             { key: 'final', label: 'Final', nums: [104] }
         ];
 
+        // Final knockout seeding for THIS tournament (group stage complete). Per group:
+        // [winner, runner-up, third] as team codes. Derived from the confirmed R32 bracket, so the
+        // knockout tree is correct even if a synced group result is missing or stale. A null third
+        // means that group's third-placed team did not qualify. Live standings are the fallback.
+        const GROUP_FINISH = {
+            A: ['mx', 'za', null], B: ['ch', 'ca', 'ba'], C: ['br', 'ma', null], D: ['us', 'au', 'py'],
+            E: ['de', 'ci', 'ec'], F: ['nl', 'jp', 'se'], G: ['be', 'eg', null], H: ['es', 'cv', null],
+            I: ['fr', 'no', 'sn'], J: ['ar', 'at', 'dz'], K: ['co', 'pt', 'cd'], L: ['gb-eng', 'hr', 'gh']
+        };
         function groupRankTeam(letter, idx) {
+            const seed = GROUP_FINISH[letter];
+            if (seed && seed[idx]) return TEAM_NAME_BY_CODE[seed[idx]] || seed[idx];
             const g = (appState.groups || []).find(x => String(x.group) === letter);
             if (!g || !Array.isArray(g.standings) || !g.standings.length) return null;
             const s = g.standings.slice().sort((a, b) => (b.points - a.points) || (b.gd - a.gd) || ((b.gf || 0) - (a.gf || 0)));
