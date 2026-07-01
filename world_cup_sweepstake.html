@@ -226,6 +226,10 @@
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.6); z-index: 1000; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: linear-gradient(135deg, #0D2847 0%, #0B1F33 100%); border: 1px solid rgba(79, 195, 247, 0.3); border-radius: 16px; padding: 2rem; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+        .modal-content select { width: 100%; padding: 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(79,195,247,0.3); border-radius: 8px; color: #fff; font-size: 0.9rem; }
+        .mr-row { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.6rem; }
+        .mr-row select { flex: 1; }
+        .mr-row input { width: 64px; flex: 0 0 auto; text-align: center; }
         .modal-title { font-family: 'Outfit', sans-serif; font-size: 1.3rem; margin-bottom: 1.5rem; color: #4FC3F7; }
         .toast { position: fixed; bottom: 2rem; right: 2rem; background: linear-gradient(135deg, #4FC3F7 0%, #29B6F6 100%); color: #0B1F33; padding: 1rem 1.5rem; border-radius: 8px; font-weight: 600; animation: slideIn 0.3s ease; z-index: 2000; max-width: 340px; }
         @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -2183,6 +2187,7 @@ Output ONLY this JSON:
                    <button onclick="manualPublish()" style="width: 100%; margin-top: 0.75rem;">📤 Re-publish Latest</button>`
                 : `<p class="info-text" style="margin-bottom:0.75rem;">No viewer link yet. Add your jsonbin.io key below, then click "Publish Now".</p>
                    <button onclick="manualPublish()" style="width: 100%;">📤 Publish Now</button>`;
+            const teamOpts = TEAMS.slice().sort((a, b) => a.name.localeCompare(b.name)).map(t => `<option value="${t.name}">${t.name}</option>`).join('');
             modal.querySelector('.modal-content').innerHTML = `
                 <h2 class="modal-title">Settings</h2>
                 <div class="settings-group">
@@ -2209,6 +2214,27 @@ Output ONLY this JSON:
                     </label>
                 </div>
                 <div class="settings-group">
+                    <h3>Enter a Result Manually</h3>
+                    <p class="info-text" style="margin-bottom: 0.75rem;">Use this when Sync can't find a game. Saving overwrites any existing score for the same match, updates the table/bracket, and re-publishes to viewers.</p>
+                    <div class="participant-input-group">
+                        <label>Stage</label>
+                        <select id="mrStage">
+                            <option value="group-1">Group — Matchday 1</option>
+                            <option value="group-2">Group — Matchday 2</option>
+                            <option value="group-3">Group — Matchday 3</option>
+                            <option value="ro32">Round of 32</option>
+                            <option value="ro16">Round of 16</option>
+                            <option value="qf">Quarter-final</option>
+                            <option value="sf">Semi-final</option>
+                            <option value="final">Final</option>
+                        </select>
+                    </div>
+                    <div class="mr-row"><select id="mrHome"><option value="">Home team…</option>${teamOpts}</select><input type="number" id="mrHomeScore" min="0" placeholder="0" /></div>
+                    <div class="mr-row"><select id="mrAway"><option value="">Away team…</option>${teamOpts}</select><input type="number" id="mrAwayScore" min="0" placeholder="0" /></div>
+                    <div class="participant-input-group"><label>If a knockout tie was drawn, who advanced on penalties? (optional)</label><select id="mrPens"><option value="">—</option>${teamOpts}</select></div>
+                    <button onclick="saveManualResult()" style="width: 100%;">Save Result</button>
+                </div>
+                <div class="settings-group">
                     <h3>Data Management</h3>
                     <button class="secondary" onclick="resetSweepstake()" style="width: 100%;">Reset Sweepstake</button>
                 </div>
@@ -2223,6 +2249,28 @@ Output ONLY this JSON:
         }
 
         function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
+
+        function saveManualResult() {
+            const stageSel = document.getElementById('mrStage').value;
+            const home = document.getElementById('mrHome').value;
+            const away = document.getElementById('mrAway').value;
+            const hs = parseInt(document.getElementById('mrHomeScore').value, 10);
+            const as = parseInt(document.getElementById('mrAwayScore').value, 10);
+            const pens = document.getElementById('mrPens').value;
+            if (!home || !away || flagCodeFor(home) === flagCodeFor(away)) { showToast('❌ Pick two different teams'); return; }
+            if (!Number.isFinite(hs) || !Number.isFinite(as)) { showToast('❌ Enter both scores'); return; }
+            const r = { home_team: home, away_team: away, home_score: hs, away_score: as };
+            if (stageSel.indexOf('group-') === 0) { r.stage = 'group'; r.matchday = parseInt(stageSel.split('-')[1], 10); }
+            else r.stage = stageSel;
+            if (pens && hs === as) {
+                if (flagCodeFor(pens) !== flagCodeFor(home) && flagCodeFor(pens) !== flagCodeFor(away)) { showToast('❌ Penalty winner must be one of the two teams'); return; }
+                r.penalties_winner = pens;
+            }
+            appState.results = dedupeGames([...(appState.results || []), r], 'result');
+            refreshStandings(); saveToLocalStorage(); updateDashboard();
+            if (typeof publishToViewers === 'function') publishToViewers();
+            showToast(`✓ Saved: ${home} ${hs}–${as} ${away}`);
+        }
 
         function saveApiKey() {
             const key = document.getElementById('settingsApiKey').value.trim();
